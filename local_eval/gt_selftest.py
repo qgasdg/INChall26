@@ -74,7 +74,7 @@ def main() -> None:
             "static_dino_pf": dino_pf, "static_dino_flat": dino_fl,
             "static_video": video_d, "static_action": st_action,
         })
-        print(f"  {s['dataset'][:40]:42s} ep{s['ep']:4d}  floor {floor:.4f} | "
+        print(f"  {s['dataset'][:40]:42s} ep{s['episode_index']:4d}  floor {floor:.4f} | "
               f"static: dino {dino_pf:.4f}/{dino_fl:.4f} video {video_d:.4f} act {st_action:.4f}")
 
     def mean(k): return float(np.mean([r[k] for r in rows]))
