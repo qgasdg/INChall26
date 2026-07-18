@@ -32,6 +32,6 @@
 ### 후속 조사 목록 (EDA 신규 발견, 상세는 [05_EDA검증.md](05_EDA검증.md) §5)
 - [x] ① action-CFG 조사 완료 → [06_조사_action_cfg.md](06_조사_action_cfg.md): 베이스라인엔 학습된 uncond 경로가 전무(텍스트 uncond는 no-op이었음). E1에서 CFG 봉인, 자체 학습 시 action dropout 0.1 포함 결정
 - [ ] ② <16프레임 에피소드 34개: 데이터 로더 필터 구현 시 반영 (전체의 0.31%라 영향 미미하나 크래시 방지 필수)
-- [ ] ③ eval wrist_roll +1.5σ 시프트: eval 216개 action 분포를 train과 정밀 대조 → unseen-scene 홀드아웃을 eval 분포에 가깝게 설계할 수 있는지 조사
-- [ ] ⑤ eval↔train 장면 겹침 전수 대조: eval 이미지 216장 vs train 11,132 에피소드 첫 프레임 매칭 (저해상도 1차 스크리닝 → 후보 정밀 비교). 겹침 있으면 해당 데이터셋 오버샘플링(합법), 없으면 "eval 100% 미공개 장면" 확정 → ③의 홀드아웃 설계 근거. 정황상 eval은 주최측 자체 수집 추정(camera_key 'top' 잔재, action 분포 시프트)
+- [x] ③ 완료 → [10_조사_eval도메인.md](10_조사_eval도메인.md): wrist_roll 시프트는 전 샘플 체계적(+1.5σ, 하드웨어 차이). eval은 움직임 구간만 선별(준정지 9/216)
+- [x] ⑤ 완료 → [10_조사_eval도메인.md](10_조사_eval도메인.md): **장면 겹침 0 확정**(최대 sim 0.77<0.85). eval = 주최측 자체 촬영 셋업 2곳(114+58장). 사촌 데이터셋(aractingi/push_cube, Loki0929/so100_duck, frk2) → 홀드아웃·큐레이션 반영 검토
 - [ ] ④ 카메라 키 예외 `liyitenga/so100_bi_giveme5`(s_left): 영상 뷰가 특이한지 확인, 필요 시 학습 제외 후보
