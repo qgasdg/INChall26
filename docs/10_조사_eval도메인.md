@@ -8,6 +8,20 @@
 3. **eval action 분포 (③)**: wrist_roll이 **전 샘플 체계적 +1.5σ** (90%가 +0.5σ 이상) — 일부 특이가 아니라 eval 하드웨어의 손목 마운트 각도 자체가 다름. lift/elbow는 평균 유사하나 산포 1.4~1.5배. **움직임 있는 구간만 선별**됨 (스텝당 중앙값 1.9°, 준정지 9/216) → 정지 영상류 꼼수는 Action에서 확실히 벌점.
 4. 종합: **eval = 주최측이 자체 셋업 2곳에서 새로 촬영한 데이터** (camera_key 'top' 잔재·wrist_roll 시프트·장면 무겹침 3중 정합).
 
+## 셋업 예시 사진
+
+**셋업 A** (114장+변형, sample ~000–153): 검은 매트 + LeRobot 판다/HF 스티커 + 흰색 SO-100, top-down 뷰
+
+| sample_000000 | sample_000100 |
+|---|---|
+| ![셋업A 예시1](assets/eval_sample_000000.png) | ![셋업A 예시2](assets/eval_sample_000100.png) |
+
+**셋업 B** (58장, sample 154–215): 나무 책상 + 검은 SO-100 + 아크릴 상자, 측면 상향 뷰
+
+| sample_000154 | sample_000215 |
+|---|---|
+| ![셋업B 예시1](assets/eval_sample_000154.png) | ![셋업B 예시2](assets/eval_sample_000215.png) |
+
 ## 가장 가까운 train 사촌 (스타일 유사, 다른 장소 — 큐레이션·홀드아웃 힌트)
 - 셋업1(검은 매트) 사촌: `aractingi/push_cube_offline_data` (sim ~0.72-0.77, 검은 매트+스티커)
 - 셋업2(나무 책상+검은 팔) 사촌: `Loki0929/so100_duck` (sim ~0.72-0.77), `frk2/so100large`
