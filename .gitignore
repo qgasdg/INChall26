@@ -16,3 +16,6 @@ wandb/
 *.ckpt
 *.safetensors
 *.mp4
+
+# 분석 캐시
+local_eval/*.npz
