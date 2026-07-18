@@ -24,6 +24,7 @@
 - GPU 렌트 전 준비 완료: pyproject+uv.lock(킷 정합, omegaconf 버그 반영), setup_server.sh(sha256 내장), results/ 정본 CSV 2종, E0 런북([09_E0_런북.md](09_E0_런북.md), exp04). E0는 추론만이라 저가 GPU로 충분 — 96GB 학습 서버 결정은 E3 시점으로 분리
 - open.zip 반입 경로 확인: 데이콘 CDN(cfiles.dacon.co.kr)이 **인증 없이 접근 가능**(HEAD 200·크기 일치) → 서버에서 직접 다운로드, setup_server.sh에 반영. scp 불필요 (백업: 집 업링크 35.5Mbps 실측, ~32분)
 - 4090 세션(E0~E1) 가설 5개 정리 → [11_E0E1_가설.md](11_E0E1_가설.md): H1 캘리브레이션(0.517), H2 Action 재현(0.579), H3 결정론화 cheap win, H4 best-of-N 시간 예산, H5 정지영상 앵커(제출 예산 보고 결정). GPU는 RunPod 4090+볼륨 50GB로 확정, A100($1.5/hr)은 차선(80GB<96GB·PRO 6000 $0.87/hr보다 비쌈)
+- **팀원 리포트 3종 합류** → [12_팀원리포트_반영.md](12_팀원리포트_반영.md) (원본 docs/external/): 팀원이 이미 **Public 2위 0.302949(정적영상)**, 베이스라인 재현 제출 0.5167(Kaggle T4), 서버 앵커 2점 확보. H1·H2·H5 확정, **H3 전제 붕괴 — 베이스라인은 이미 실효 η=0** (config ddim_eta가 sampler **kwargs에 삼켜짐, generate_baseline_videos.py→ddim.py 코드 추적으로 우리도 확정). 1~7위 = 정적 정체선 0.303, E4 기준 상향. 병합 전 조정 필요: 우리 계정 제출 1회(정적이면 GPU 불필요), 홀드아웃 통일, exp ID 충돌, E1 분담 → **4090 렌트는 분담 합의 전 보류**
 - **로컬 리더보드 구축 + GT self-test** → [08_로컬리더보드_구축.md](08_로컬리더보드_구축.md): local_eval/ 완성(킷 브리지·2단 홀드아웃·채점기). ★핵심 발견: 킷 action extractor가 train 도메인 다수에서 신뢰 불가(GT 영상 MAE 1.49 > 베이스라인 eval 0.579) → 로컬 Action은 eval 실측을 정본으로 변경. 정지영상의 DINO/Video는 0.03~0.04로 낮음 → Action 지배 재확인
 
 ### 리더보드 스냅샷 (7/18, 대회 3일차)
