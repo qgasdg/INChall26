@@ -1,0 +1,18 @@
+# 데이터·킷 (원본은 open.zip에서 복원)
+open/
+open.zip
+
+# 환경
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# 학습 산출물
+ckpts/
+weights/
+outputs/
+wandb/
+*.ckpt
+*.safetensors
+*.mp4
