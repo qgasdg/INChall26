@@ -15,10 +15,11 @@ export PATH="$HOME/.local/bin:$PATH"
 # 2) 파이썬 환경 (uv.lock 기준 완전 재현)
 uv sync
 
-# 3) 데이터 — 데이콘은 로그인 필요라 자동 다운로드 불가. scp/허브로 미리 반입
+# 3) 데이터 — 데이콘 CDN이 인증 없이 접근 가능 확인됨 (2026-07-18, HEAD 200·크기 일치)
+OPEN_URL="https://cfiles.dacon.co.kr/competitions/236736/open.zip"
 if [ ! -f open.zip ]; then
-    echo "ERROR: open.zip 없음 — 데이콘에서 받아 repo 루트에 두세요" >&2
-    exit 1
+    echo "open.zip 다운로드 (8.6GB, 데이콘 CDN)"
+    curl -fL --retry 3 -C - -o open.zip "$OPEN_URL"
 fi
 echo "${OPEN_SHA256}  open.zip" | sha256sum -c -
 if [ ! -d open/submission_kit ]; then

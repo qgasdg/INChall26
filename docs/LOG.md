@@ -21,6 +21,8 @@
 - 운영 전략 수립 → [07_운영전략.md](07_운영전략.md): 2-머신 체제(Mac 개발/GPU 서버 학습), private repo + trunk-based, 노션=기획·repo=정본, 실험 트래킹 = repo CSV 정본(local_lb/submissions) + wandb 보조, expNN은 exp04부터. git init + .gitignore 완료. 최우선 미결정 = GPU 조달.
 - 멀티 서버 운영 전략 추가(07 §1.1): 사이트 간 DDP 금지·실험 병렬화, 주력(장기 학습)/보조(짧은 실험) 역할 분담, 부트스트랩 스크립트 단일화, 서버 프로필 config 분리, 아티팩트 허브(HF private) 경유, local_lb.csv에 server 컬럼, 최종 추론은 단일 서버 고정
 
+- GPU 렌트 전 준비 완료: pyproject+uv.lock(킷 정합, omegaconf 버그 반영), setup_server.sh(sha256 내장), results/ 정본 CSV 2종, E0 런북([09_E0_런북.md](09_E0_런북.md), exp04). E0는 추론만이라 저가 GPU로 충분 — 96GB 학습 서버 결정은 E3 시점으로 분리
+- open.zip 반입 경로 확인: 데이콘 CDN(cfiles.dacon.co.kr)이 **인증 없이 접근 가능**(HEAD 200·크기 일치) → 서버에서 직접 다운로드, setup_server.sh에 반영. scp 불필요 (백업: 집 업링크 35.5Mbps 실측, ~32분)
 - **로컬 리더보드 구축 + GT self-test** → [08_로컬리더보드_구축.md](08_로컬리더보드_구축.md): local_eval/ 완성(킷 브리지·2단 홀드아웃·채점기). ★핵심 발견: 킷 action extractor가 train 도메인 다수에서 신뢰 불가(GT 영상 MAE 1.49 > 베이스라인 eval 0.579) → 로컬 Action은 eval 실측을 정본으로 변경. 정지영상의 DINO/Video는 0.03~0.04로 낮음 → Action 지배 재확인
 
 ### 리더보드 스냅샷 (7/18, 대회 3일차)
