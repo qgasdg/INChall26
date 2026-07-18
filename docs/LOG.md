@@ -19,6 +19,7 @@
 - 신규 발견: ① baseline `action_dropout_prob=0` → action-CFG uncond 경로 미학습 (E1 제약) ② <16프레임 에피소드 34개 필터 필요 ③ eval wrist_roll 분포가 train 대비 +1.5σ 시프트 ④ 카메라 키 예외 1개(s_left)
 - TODO: E0(baseline 재현+제출 1회) 준비 — GPU 머신 필요. 로컬 리더보드(킷 체인 재현) 구축.
 - 운영 전략 수립 → [07_운영전략.md](07_운영전략.md): 2-머신 체제(Mac 개발/GPU 서버 학습), private repo + trunk-based, 노션=기획·repo=정본, 실험 트래킹 = repo CSV 정본(local_lb/submissions) + wandb 보조, expNN은 exp04부터. git init + .gitignore 완료. 최우선 미결정 = GPU 조달.
+- 멀티 서버 운영 전략 추가(07 §1.1): 사이트 간 DDP 금지·실험 병렬화, 주력(장기 학습)/보조(짧은 실험) 역할 분담, 부트스트랩 스크립트 단일화, 서버 프로필 config 분리, 아티팩트 허브(HF private) 경유, local_lb.csv에 server 컬럼, 최종 추론은 단일 서버 고정
 
 ### 리더보드 스냅샷 (7/18, 대회 3일차)
 - 1위 0.27184, 2~3위 0.30241(동점), 중위 0.336~0.517, **다수(35위 이하)가 0.51708에 수렴** → 0.517 ≈ 베이스라인 그대로 제출한 점수로 추정 (역산: Action 0.579×0.4=0.232 → DINO+Video 평균 cos dist ≈ 0.48)
