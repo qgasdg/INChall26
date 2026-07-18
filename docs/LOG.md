@@ -38,6 +38,8 @@
 - **[T 승인] 룰북 §2 개정 + E1 분담 확정 (양측 승인: Y 기안·T 승인)** → 룰북 [§2](13_팀_룰북.md)에 v2 학습제외·수치혼용금지 반영, [14](14_홀드아웃_v2_절차.md)/[15](15_E1_분담_제안.md) 확정 표기. E1은 Y 인수 합의.
 - **[T 커밋] 홀드아웃 488 목록 확정** → [local_eval/holdout_t488.json](../local_eval/holdout_t488.json) (impl 레지스트리 holdout_v1, seed 42 유래). **488 실측 정정: 앞선 추정 "in-domain 400 + unseen 88"은 오류 → 실제 indomain 328(328ep/120ds) + unseen 160(80ep×2clip/8ds).** unseen 8개 중 `aractingi/push_cube_offline_data`는 이미 포함(셋업A 사촌, v2 유지), `frk2/so100large`는 미포함(v2 신규 추가 대상). 병목 해소 → Y가 v2 구축 착수 가능.
 
+- **홀드아웃 v2 구축 완료** → `local_eval/holdout_v2.json` + `make_holdout_v2.py` (docs/14 §구축 결과): **in-domain 326 + 사촌 80(push_cube+so100large) + 일반 82(CSCSXX+drop0) = 488**, seed 0 결정론 검증. 편차 2건 기록 — ① frk2가 T in-domain에 2샘플 있어 제거(승격 모순 해소) ② 일반 티어는 범위(80~120) 만족 조합 채택. 학습 제외 4개 데이터셋 = meta.train_exclusion 정본. 남은 것 = 재앵커(§4, E1 세션에서 겸행 예정)
+
 ### 리더보드 스냅샷 (7/18, 대회 3일차)
 - 1위 0.27184, 2~3위 0.30241(동점), 중위 0.336~0.517, **다수(35위 이하)가 0.51708에 수렴** → 0.517 ≈ 베이스라인 그대로 제출한 점수로 추정 (역산: Action 0.579×0.4=0.232 → DINO+Video 평균 cos dist ≈ 0.48)
 - 제출 41팀 / 참가 98명

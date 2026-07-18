@@ -1,0 +1,3938 @@
+{
+ "meta": {
+  "source": "docs/14 확정 절차 — T488 indomain 보존 + unseen 교체 (make_holdout_v2.py, seed 0)",
+  "base": "local_eval/holdout_t488.json (T, seed 42)",
+  "indomain_deviation": "frk2/so100large 승격으로 indomain 2샘플 제거(328→326): ['indomain__frk2__so100large__ep000004__t0002', 'indomain__frk2__so100large__ep000041__t0018']",
+  "returned_to_train": [
+   "AndrejOrsula/lerobot_double_ball_stacking_random",
+   "Gano007/so100_medic",
+   "LemonadeDai/so100_coca",
+   "jpata/so100_pick_place_tangerine",
+   "therarelab/so100_pick_place_2"
+  ],
+  "train_exclusion": [
+   "aractingi/push_cube_offline_data",
+   "frk2/so100large",
+   "CSCSXX/pick_place_cube_1.18",
+   "ZGGZZG/so100_drop0"
+  ],
+  "counts": {
+   "indomain": 326,
+   "unseen_cousin": 80,
+   "unseen_general": 82,
+   "total": 488
+  }
+ },
+ "unseen_datasets": [
+  "CSCSXX/pick_place_cube_1.18",
+  "ZGGZZG/so100_drop0",
+  "aractingi/push_cube_offline_data",
+  "frk2/so100large"
+ ],
+ "samples": [
+  {
+   "tier": "indomain",
+   "dataset": "00ri/so100_battery",
+   "episode_index": 4,
+   "start": 39,
+   "length": 104,
+   "sample_id": "indomain__00ri__so100_battery__ep000004__t0039"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "00ri/so100_battery",
+   "episode_index": 38,
+   "start": 32,
+   "length": 90,
+   "sample_id": "indomain__00ri__so100_battery__ep000038__t0032"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "00ri/so100_battery_bin_center",
+   "episode_index": 5,
+   "start": 14,
+   "length": 86,
+   "sample_id": "indomain__00ri__so100_battery_bin_center__ep000005__t0014"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "00ri/so100_battery_bin_center",
+   "episode_index": 42,
+   "start": 5,
+   "length": 74,
+   "sample_id": "indomain__00ri__so100_battery_bin_center__ep000042__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "356c/so100_duck_reposition_1",
+   "episode_index": 30,
+   "start": 110,
+   "length": 155,
+   "sample_id": "indomain__356c__so100_duck_reposition_1__ep000030__t0110"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "356c/so100_duck_reposition_1",
+   "episode_index": 44,
+   "start": 75,
+   "length": 163,
+   "sample_id": "indomain__356c__so100_duck_reposition_1__ep000044__t0075"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "356c/so100_duck_reposition_1",
+   "episode_index": 57,
+   "start": 17,
+   "length": 151,
+   "sample_id": "indomain__356c__so100_duck_reposition_1__ep000057__t0017"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "356c/so100_nut_sort_1",
+   "episode_index": 26,
+   "start": 108,
+   "length": 132,
+   "sample_id": "indomain__356c__so100_nut_sort_1__ep000026__t0108"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "356c/so100_nut_sort_1",
+   "episode_index": 30,
+   "start": 95,
+   "length": 137,
+   "sample_id": "indomain__356c__so100_nut_sort_1__ep000030__t0095"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "356c/so100_nut_sort_1",
+   "episode_index": 48,
+   "start": 57,
+   "length": 105,
+   "sample_id": "indomain__356c__so100_nut_sort_1__ep000048__t0057"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Bartm3/dice2",
+   "episode_index": 25,
+   "start": 34,
+   "length": 77,
+   "sample_id": "indomain__Bartm3__dice2__ep000025__t0034"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Bartm3/dice2",
+   "episode_index": 36,
+   "start": 37,
+   "length": 71,
+   "sample_id": "indomain__Bartm3__dice2__ep000036__t0037"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Bartm3/dice2",
+   "episode_index": 90,
+   "start": 15,
+   "length": 31,
+   "sample_id": "indomain__Bartm3__dice2__ep000090__t0015"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Bartm3/dice2",
+   "episode_index": 135,
+   "start": 24,
+   "length": 71,
+   "sample_id": "indomain__Bartm3__dice2__ep000135__t0024"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Beegbrain/pick_lemon_and_drop_in_bowl",
+   "episode_index": 6,
+   "start": 46,
+   "length": 82,
+   "sample_id": "indomain__Beegbrain__pick_lemon_and_drop_in_bowl__ep000006__t0046"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Beegbrain/pick_lemon_and_drop_in_bowl",
+   "episode_index": 33,
+   "start": 5,
+   "length": 76,
+   "sample_id": "indomain__Beegbrain__pick_lemon_and_drop_in_bowl__ep000033__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Beegbrain/pick_place_green_block",
+   "episode_index": 12,
+   "start": 29,
+   "length": 83,
+   "sample_id": "indomain__Beegbrain__pick_place_green_block__ep000012__t0029"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Beegbrain/pick_place_green_block",
+   "episode_index": 30,
+   "start": 54,
+   "length": 83,
+   "sample_id": "indomain__Beegbrain__pick_place_green_block__ep000030__t0054"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Beegbrain/sweep_tissue_cube",
+   "episode_index": 11,
+   "start": 16,
+   "length": 71,
+   "sample_id": "indomain__Beegbrain__sweep_tissue_cube__ep000011__t0016"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Beegbrain/sweep_tissue_cube",
+   "episode_index": 24,
+   "start": 29,
+   "length": 138,
+   "sample_id": "indomain__Beegbrain__sweep_tissue_cube__ep000024__t0029"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_000_white_red",
+   "episode_index": 12,
+   "start": 61,
+   "length": 107,
+   "sample_id": "indomain__Chojins__chess_game_000_white_red__ep000012__t0061"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_000_white_red",
+   "episode_index": 42,
+   "start": 18,
+   "length": 60,
+   "sample_id": "indomain__Chojins__chess_game_000_white_red__ep000042__t0018"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_000_white_red",
+   "episode_index": 56,
+   "start": 27,
+   "length": 82,
+   "sample_id": "indomain__Chojins__chess_game_000_white_red__ep000056__t0027"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_000_white_red",
+   "episode_index": 67,
+   "start": 21,
+   "length": 66,
+   "sample_id": "indomain__Chojins__chess_game_000_white_red__ep000067__t0021"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_001_blue_stereo",
+   "episode_index": 96,
+   "start": 27,
+   "length": 51,
+   "sample_id": "indomain__Chojins__chess_game_001_blue_stereo__ep000096__t0027"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_001_blue_stereo",
+   "episode_index": 184,
+   "start": 34,
+   "length": 63,
+   "sample_id": "indomain__Chojins__chess_game_001_blue_stereo__ep000184__t0034"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_001_blue_stereo",
+   "episode_index": 192,
+   "start": 43,
+   "length": 77,
+   "sample_id": "indomain__Chojins__chess_game_001_blue_stereo__ep000192__t0043"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_001_blue_stereo",
+   "episode_index": 467,
+   "start": 54,
+   "length": 132,
+   "sample_id": "indomain__Chojins__chess_game_001_blue_stereo__ep000467__t0054"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_001_red_stereo",
+   "episode_index": 85,
+   "start": 32,
+   "length": 61,
+   "sample_id": "indomain__Chojins__chess_game_001_red_stereo__ep000085__t0032"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_001_red_stereo",
+   "episode_index": 268,
+   "start": 52,
+   "length": 120,
+   "sample_id": "indomain__Chojins__chess_game_001_red_stereo__ep000268__t0052"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_001_red_stereo",
+   "episode_index": 381,
+   "start": 32,
+   "length": 87,
+   "sample_id": "indomain__Chojins__chess_game_001_red_stereo__ep000381__t0032"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_001_red_stereo",
+   "episode_index": 480,
+   "start": 19,
+   "length": 134,
+   "sample_id": "indomain__Chojins__chess_game_001_red_stereo__ep000480__t0019"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_009_white",
+   "episode_index": 80,
+   "start": 92,
+   "length": 111,
+   "sample_id": "indomain__Chojins__chess_game_009_white__ep000080__t0092"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_009_white",
+   "episode_index": 101,
+   "start": 6,
+   "length": 87,
+   "sample_id": "indomain__Chojins__chess_game_009_white__ep000101__t0006"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_009_white",
+   "episode_index": 128,
+   "start": 20,
+   "length": 76,
+   "sample_id": "indomain__Chojins__chess_game_009_white__ep000128__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Chojins/chess_game_009_white",
+   "episode_index": 231,
+   "start": 5,
+   "length": 62,
+   "sample_id": "indomain__Chojins__chess_game_009_white__ep000231__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "DorayakiLin/so100_pick_charger_on_tissue",
+   "episode_index": 17,
+   "start": 62,
+   "length": 84,
+   "sample_id": "indomain__DorayakiLin__so100_pick_charger_on_tissue__ep000017__t0062"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "DorayakiLin/so100_pick_charger_on_tissue",
+   "episode_index": 48,
+   "start": 40,
+   "length": 97,
+   "sample_id": "indomain__DorayakiLin__so100_pick_charger_on_tissue__ep000048__t0040"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "FeiYjf/new_GtoR",
+   "episode_index": 99,
+   "start": 8,
+   "length": 48,
+   "sample_id": "indomain__FeiYjf__new_GtoR__ep000099__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "FeiYjf/new_GtoR",
+   "episode_index": 172,
+   "start": 22,
+   "length": 47,
+   "sample_id": "indomain__FeiYjf__new_GtoR__ep000172__t0022"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "FeiYjf/new_GtoR",
+   "episode_index": 262,
+   "start": 40,
+   "length": 66,
+   "sample_id": "indomain__FeiYjf__new_GtoR__ep000262__t0040"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "FeiYjf/new_GtoR",
+   "episode_index": 289,
+   "start": 17,
+   "length": 54,
+   "sample_id": "indomain__FeiYjf__new_GtoR__ep000289__t0017"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "FsqZ/so100_1",
+   "episode_index": 10,
+   "start": 5,
+   "length": 76,
+   "sample_id": "indomain__FsqZ__so100_1__ep000010__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "FsqZ/so100_1",
+   "episode_index": 28,
+   "start": 38,
+   "length": 102,
+   "sample_id": "indomain__FsqZ__so100_1__ep000028__t0038"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_peach3",
+   "episode_index": 16,
+   "start": 26,
+   "length": 61,
+   "sample_id": "indomain__HITHY__so100_peach3__ep000016__t0026"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_peach3",
+   "episode_index": 17,
+   "start": 20,
+   "length": 61,
+   "sample_id": "indomain__HITHY__so100_peach3__ep000017__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_peach3",
+   "episode_index": 57,
+   "start": 8,
+   "length": 40,
+   "sample_id": "indomain__HITHY__so100_peach3__ep000057__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_peach3",
+   "episode_index": 78,
+   "start": 15,
+   "length": 41,
+   "sample_id": "indomain__HITHY__so100_peach3__ep000078__t0015"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_peach4",
+   "episode_index": 8,
+   "start": 20,
+   "length": 58,
+   "sample_id": "indomain__HITHY__so100_peach4__ep000008__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_peach4",
+   "episode_index": 60,
+   "start": 32,
+   "length": 57,
+   "sample_id": "indomain__HITHY__so100_peach4__ep000060__t0032"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_peach4",
+   "episode_index": 116,
+   "start": 4,
+   "length": 79,
+   "sample_id": "indomain__HITHY__so100_peach4__ep000116__t0004"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_peach4",
+   "episode_index": 235,
+   "start": 1,
+   "length": 34,
+   "sample_id": "indomain__HITHY__so100_peach4__ep000235__t0001"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_strawberry",
+   "episode_index": 41,
+   "start": 20,
+   "length": 51,
+   "sample_id": "indomain__HITHY__so100_strawberry__ep000041__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_strawberry",
+   "episode_index": 73,
+   "start": 20,
+   "length": 52,
+   "sample_id": "indomain__HITHY__so100_strawberry__ep000073__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_strawberry",
+   "episode_index": 75,
+   "start": 17,
+   "length": 53,
+   "sample_id": "indomain__HITHY__so100_strawberry__ep000075__t0017"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "HITHY/so100_strawberry",
+   "episode_index": 102,
+   "start": 27,
+   "length": 49,
+   "sample_id": "indomain__HITHY__so100_strawberry__ep000102__t0027"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Ityl/so100_recording2",
+   "episode_index": 12,
+   "start": 26,
+   "length": 63,
+   "sample_id": "indomain__Ityl__so100_recording2__ep000012__t0026"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Ityl/so100_recording2",
+   "episode_index": 42,
+   "start": 21,
+   "length": 57,
+   "sample_id": "indomain__Ityl__so100_recording2__ep000042__t0021"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Jiafei1224/so100_pa222per",
+   "episode_index": 13,
+   "start": 1,
+   "length": 90,
+   "sample_id": "indomain__Jiafei1224__so100_pa222per__ep000013__t0001"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Jiafei1224/so100_pa222per",
+   "episode_index": 24,
+   "start": 27,
+   "length": 90,
+   "sample_id": "indomain__Jiafei1224__so100_pa222per__ep000024__t0027"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Jiangeng/so100_413",
+   "episode_index": 0,
+   "start": 46,
+   "length": 100,
+   "sample_id": "indomain__Jiangeng__so100_413__ep000000__t0046"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Jiangeng/so100_413",
+   "episode_index": 40,
+   "start": 7,
+   "length": 69,
+   "sample_id": "indomain__Jiangeng__so100_413__ep000040__t0007"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Loki0929/so100_duck",
+   "episode_index": 27,
+   "start": 8,
+   "length": 89,
+   "sample_id": "indomain__Loki0929__so100_duck__ep000027__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Loki0929/so100_duck",
+   "episode_index": 223,
+   "start": 39,
+   "length": 91,
+   "sample_id": "indomain__Loki0929__so100_duck__ep000223__t0039"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Loki0929/so100_duck",
+   "episode_index": 253,
+   "start": 31,
+   "length": 82,
+   "sample_id": "indomain__Loki0929__so100_duck__ep000253__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Loki0929/so100_duck",
+   "episode_index": 264,
+   "start": 22,
+   "length": 86,
+   "sample_id": "indomain__Loki0929__so100_duck__ep000264__t0022"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Mohamedal/put_banana",
+   "episode_index": 0,
+   "start": 68,
+   "length": 119,
+   "sample_id": "indomain__Mohamedal__put_banana__ep000000__t0068"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Mohamedal/put_banana",
+   "episode_index": 23,
+   "start": 56,
+   "length": 152,
+   "sample_id": "indomain__Mohamedal__put_banana__ep000023__t0056"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Mwuqiu/so100_0408_muti",
+   "episode_index": 6,
+   "start": 26,
+   "length": 84,
+   "sample_id": "indomain__Mwuqiu__so100_0408_muti__ep000006__t0026"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Mwuqiu/so100_0408_muti",
+   "episode_index": 23,
+   "start": 25,
+   "length": 111,
+   "sample_id": "indomain__Mwuqiu__so100_0408_muti__ep000023__t0025"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Mwuqiu/so100_0408_muti",
+   "episode_index": 57,
+   "start": 0,
+   "length": 72,
+   "sample_id": "indomain__Mwuqiu__so100_0408_muti__ep000057__t0000"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "NONHUMAN-RESEARCH/SOARM100_TASK_VENDA",
+   "episode_index": 4,
+   "start": 77,
+   "length": 102,
+   "sample_id": "indomain__NONHUMAN-RESEARCH__SOARM100_TASK_VENDA__ep000004__t0077"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "NONHUMAN-RESEARCH/SOARM100_TASK_VENDA",
+   "episode_index": 35,
+   "start": 13,
+   "length": 102,
+   "sample_id": "indomain__NONHUMAN-RESEARCH__SOARM100_TASK_VENDA__ep000035__t0013"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "NONHUMAN-RESEARCH/SOARM100_TASK_VENDA",
+   "episode_index": 137,
+   "start": 64,
+   "length": 102,
+   "sample_id": "indomain__NONHUMAN-RESEARCH__SOARM100_TASK_VENDA__ep000137__t0064"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "NONHUMAN-RESEARCH/SOARM100_TASK_VENDA",
+   "episode_index": 140,
+   "start": 15,
+   "length": 102,
+   "sample_id": "indomain__NONHUMAN-RESEARCH__SOARM100_TASK_VENDA__ep000140__t0015"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Odog16/so100_cube_drop_pick_v1",
+   "episode_index": 16,
+   "start": 37,
+   "length": 58,
+   "sample_id": "indomain__Odog16__so100_cube_drop_pick_v1__ep000016__t0037"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Odog16/so100_cube_drop_pick_v1",
+   "episode_index": 25,
+   "start": 1,
+   "length": 59,
+   "sample_id": "indomain__Odog16__so100_cube_drop_pick_v1__ep000025__t0001"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Odog16/so100_cube_stacking_v1",
+   "episode_index": 9,
+   "start": 198,
+   "length": 214,
+   "sample_id": "indomain__Odog16__so100_cube_stacking_v1__ep000009__t0198"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "Odog16/so100_cube_stacking_v1",
+   "episode_index": 14,
+   "start": 95,
+   "length": 138,
+   "sample_id": "indomain__Odog16__so100_cube_stacking_v1__ep000014__t0095"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "RasmusP/so100_Orange2Green",
+   "episode_index": 15,
+   "start": 52,
+   "length": 119,
+   "sample_id": "indomain__RasmusP__so100_Orange2Green__ep000015__t0052"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "RasmusP/so100_Orange2Green",
+   "episode_index": 48,
+   "start": 45,
+   "length": 119,
+   "sample_id": "indomain__RasmusP__so100_Orange2Green__ep000048__t0045"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "VoicAndrei/so100_banana_to_plate_only",
+   "episode_index": 1,
+   "start": 1,
+   "length": 83,
+   "sample_id": "indomain__VoicAndrei__so100_banana_to_plate_only__ep000001__t0001"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "VoicAndrei/so100_banana_to_plate_only",
+   "episode_index": 16,
+   "start": 28,
+   "length": 57,
+   "sample_id": "indomain__VoicAndrei__so100_banana_to_plate_only__ep000016__t0028"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "VoicAndrei/so100_banana_to_plate_only",
+   "episode_index": 20,
+   "start": 47,
+   "length": 64,
+   "sample_id": "indomain__VoicAndrei__so100_banana_to_plate_only__ep000020__t0047"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "VoicAndrei/so100_banana_to_plate_only",
+   "episode_index": 110,
+   "start": 3,
+   "length": 46,
+   "sample_id": "indomain__VoicAndrei__so100_banana_to_plate_only__ep000110__t0003"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ad330/cubePlace",
+   "episode_index": 5,
+   "start": 33,
+   "length": 60,
+   "sample_id": "indomain__ad330__cubePlace__ep000005__t0033"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ad330/cubePlace",
+   "episode_index": 36,
+   "start": 18,
+   "length": 60,
+   "sample_id": "indomain__ad330__cubePlace__ep000036__t0018"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "aimihat/so100_tape",
+   "episode_index": 0,
+   "start": 44,
+   "length": 90,
+   "sample_id": "indomain__aimihat__so100_tape__ep000000__t0044"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "aimihat/so100_tape",
+   "episode_index": 28,
+   "start": 13,
+   "length": 90,
+   "sample_id": "indomain__aimihat__so100_tape__ep000028__t0013"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/chess_game_001_blue_stereo",
+   "episode_index": 44,
+   "start": 10,
+   "length": 81,
+   "sample_id": "indomain__bensprenger__chess_game_001_blue_stereo__ep000044__t0010"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/chess_game_001_blue_stereo",
+   "episode_index": 94,
+   "start": 7,
+   "length": 64,
+   "sample_id": "indomain__bensprenger__chess_game_001_blue_stereo__ep000094__t0007"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/chess_game_001_blue_stereo",
+   "episode_index": 96,
+   "start": 10,
+   "length": 51,
+   "sample_id": "indomain__bensprenger__chess_game_001_blue_stereo__ep000096__t0010"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/chess_game_001_blue_stereo",
+   "episode_index": 282,
+   "start": 27,
+   "length": 62,
+   "sample_id": "indomain__bensprenger__chess_game_001_blue_stereo__ep000282__t0027"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/left_arm_yellow_brick_in_box_v0",
+   "episode_index": 7,
+   "start": 56,
+   "length": 120,
+   "sample_id": "indomain__bensprenger__left_arm_yellow_brick_in_box_v0__ep000007__t0056"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/left_arm_yellow_brick_in_box_v0",
+   "episode_index": 22,
+   "start": 2,
+   "length": 120,
+   "sample_id": "indomain__bensprenger__left_arm_yellow_brick_in_box_v0__ep000022__t0002"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/left_arm_yellow_brick_in_box_with_purple_noise_v0",
+   "episode_index": 2,
+   "start": 18,
+   "length": 120,
+   "sample_id": "indomain__bensprenger__left_arm_yellow_brick_in_box_with_purple_noise_v0__ep000002__t0018"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/left_arm_yellow_brick_in_box_with_purple_noise_v0",
+   "episode_index": 34,
+   "start": 87,
+   "length": 120,
+   "sample_id": "indomain__bensprenger__left_arm_yellow_brick_in_box_with_purple_noise_v0__ep000034__t0087"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/right_arm_p_brick_in_box_with_y_noise_v0",
+   "episode_index": 2,
+   "start": 54,
+   "length": 120,
+   "sample_id": "indomain__bensprenger__right_arm_p_brick_in_box_with_y_noise_v0__ep000002__t0054"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "bensprenger/right_arm_p_brick_in_box_with_y_noise_v0",
+   "episode_index": 22,
+   "start": 71,
+   "length": 120,
+   "sample_id": "indomain__bensprenger__right_arm_p_brick_in_box_with_y_noise_v0__ep000022__t0071"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting",
+   "episode_index": 23,
+   "start": 140,
+   "length": 294,
+   "sample_id": "indomain__dragon-95__so100_sorting__ep000023__t0140"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting",
+   "episode_index": 47,
+   "start": 205,
+   "length": 294,
+   "sample_id": "indomain__dragon-95__so100_sorting__ep000047__t0205"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting",
+   "episode_index": 50,
+   "start": 491,
+   "length": 577,
+   "sample_id": "indomain__dragon-95__so100_sorting__ep000050__t0491"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting_2",
+   "episode_index": 9,
+   "start": 38,
+   "length": 179,
+   "sample_id": "indomain__dragon-95__so100_sorting_2__ep000009__t0038"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting_2",
+   "episode_index": 116,
+   "start": 13,
+   "length": 74,
+   "sample_id": "indomain__dragon-95__so100_sorting_2__ep000116__t0013"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting_2",
+   "episode_index": 172,
+   "start": 49,
+   "length": 215,
+   "sample_id": "indomain__dragon-95__so100_sorting_2__ep000172__t0049"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting_2",
+   "episode_index": 185,
+   "start": 179,
+   "length": 295,
+   "sample_id": "indomain__dragon-95__so100_sorting_2__ep000185__t0179"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting_3",
+   "episode_index": 56,
+   "start": 35,
+   "length": 53,
+   "sample_id": "indomain__dragon-95__so100_sorting_3__ep000056__t0035"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting_3",
+   "episode_index": 82,
+   "start": 38,
+   "length": 88,
+   "sample_id": "indomain__dragon-95__so100_sorting_3__ep000082__t0038"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting_3",
+   "episode_index": 112,
+   "start": 69,
+   "length": 93,
+   "sample_id": "indomain__dragon-95__so100_sorting_3__ep000112__t0069"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "dragon-95/so100_sorting_3",
+   "episode_index": 187,
+   "start": 16,
+   "length": 180,
+   "sample_id": "indomain__dragon-95__so100_sorting_3__ep000187__t0016"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "frk2/so100largediffcam",
+   "episode_index": 34,
+   "start": 62,
+   "length": 90,
+   "sample_id": "indomain__frk2__so100largediffcam__ep000034__t0062"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "frk2/so100largediffcam",
+   "episode_index": 45,
+   "start": 63,
+   "length": 90,
+   "sample_id": "indomain__frk2__so100largediffcam__ep000045__t0063"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_color_0328",
+   "episode_index": 39,
+   "start": 89,
+   "length": 106,
+   "sample_id": "indomain__ganker5__so100_color_0328__ep000039__t0089"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_color_0328",
+   "episode_index": 45,
+   "start": 31,
+   "length": 112,
+   "sample_id": "indomain__ganker5__so100_color_0328__ep000045__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_dataline_0328",
+   "episode_index": 28,
+   "start": 57,
+   "length": 107,
+   "sample_id": "indomain__ganker5__so100_dataline_0328__ep000028__t0057"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_dataline_0328",
+   "episode_index": 39,
+   "start": 74,
+   "length": 131,
+   "sample_id": "indomain__ganker5__so100_dataline_0328__ep000039__t0074"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_dataline_20250331",
+   "episode_index": 30,
+   "start": 15,
+   "length": 129,
+   "sample_id": "indomain__ganker5__so100_dataline_20250331__ep000030__t0015"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_dataline_20250331",
+   "episode_index": 38,
+   "start": 79,
+   "length": 111,
+   "sample_id": "indomain__ganker5__so100_dataline_20250331__ep000038__t0079"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_push_20250328",
+   "episode_index": 16,
+   "start": 32,
+   "length": 49,
+   "sample_id": "indomain__ganker5__so100_push_20250328__ep000016__t0032"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_push_20250328",
+   "episode_index": 26,
+   "start": 42,
+   "length": 65,
+   "sample_id": "indomain__ganker5__so100_push_20250328__ep000026__t0042"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_push_20250331",
+   "episode_index": 27,
+   "start": 74,
+   "length": 132,
+   "sample_id": "indomain__ganker5__so100_push_20250331__ep000027__t0074"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_push_20250331",
+   "episode_index": 47,
+   "start": 23,
+   "length": 110,
+   "sample_id": "indomain__ganker5__so100_push_20250331__ep000047__t0023"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_push_20250331",
+   "episode_index": 48,
+   "start": 31,
+   "length": 133,
+   "sample_id": "indomain__ganker5__so100_push_20250331__ep000048__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_toy_20250402",
+   "episode_index": 5,
+   "start": 18,
+   "length": 95,
+   "sample_id": "indomain__ganker5__so100_toy_20250402__ep000005__t0018"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_toy_20250402",
+   "episode_index": 13,
+   "start": 31,
+   "length": 108,
+   "sample_id": "indomain__ganker5__so100_toy_20250402__ep000013__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_toy_20250402",
+   "episode_index": 42,
+   "start": 33,
+   "length": 107,
+   "sample_id": "indomain__ganker5__so100_toy_20250402__ep000042__t0033"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "ganker5/so100_toy_20250402",
+   "episode_index": 47,
+   "start": 47,
+   "length": 110,
+   "sample_id": "indomain__ganker5__so100_toy_20250402__ep000047__t0047"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "isadev/bougies3",
+   "episode_index": 64,
+   "start": 9,
+   "length": 56,
+   "sample_id": "indomain__isadev__bougies3__ep000064__t0009"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "isadev/bougies3",
+   "episode_index": 71,
+   "start": 14,
+   "length": 65,
+   "sample_id": "indomain__isadev__bougies3__ep000071__t0014"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "isadev/bougies3",
+   "episode_index": 85,
+   "start": 42,
+   "length": 68,
+   "sample_id": "indomain__isadev__bougies3__ep000085__t0042"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "isadev/bougies3",
+   "episode_index": 144,
+   "start": 37,
+   "length": 54,
+   "sample_id": "indomain__isadev__bougies3__ep000144__t0037"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "jlesein/TestBoulon7",
+   "episode_index": 190,
+   "start": 12,
+   "length": 38,
+   "sample_id": "indomain__jlesein__TestBoulon7__ep000190__t0012"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "jlesein/TestBoulon7",
+   "episode_index": 265,
+   "start": 26,
+   "length": 43,
+   "sample_id": "indomain__jlesein__TestBoulon7__ep000265__t0026"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "jlesein/TestBoulon7",
+   "episode_index": 341,
+   "start": 17,
+   "length": 36,
+   "sample_id": "indomain__jlesein__TestBoulon7__ep000341__t0017"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "jlesein/TestBoulon7",
+   "episode_index": 364,
+   "start": 31,
+   "length": 79,
+   "sample_id": "indomain__jlesein__TestBoulon7__ep000364__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "koenvanwijk/orange50-1",
+   "episode_index": 6,
+   "start": 2,
+   "length": 40,
+   "sample_id": "indomain__koenvanwijk__orange50-1__ep000006__t0002"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "koenvanwijk/orange50-1",
+   "episode_index": 46,
+   "start": 12,
+   "length": 31,
+   "sample_id": "indomain__koenvanwijk__orange50-1__ep000046__t0012"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "koenvanwijk/orange50-variation-2",
+   "episode_index": 5,
+   "start": 6,
+   "length": 28,
+   "sample_id": "indomain__koenvanwijk__orange50-variation-2__ep000005__t0006"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "koenvanwijk/orange50-variation-2",
+   "episode_index": 36,
+   "start": 7,
+   "length": 27,
+   "sample_id": "indomain__koenvanwijk__orange50-variation-2__ep000036__t0007"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/close_top_drawer_teabox",
+   "episode_index": 12,
+   "start": 13,
+   "length": 33,
+   "sample_id": "indomain__lirislab__close_top_drawer_teabox__ep000012__t0013"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/close_top_drawer_teabox",
+   "episode_index": 21,
+   "start": 5,
+   "length": 43,
+   "sample_id": "indomain__lirislab__close_top_drawer_teabox__ep000021__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/fold_bottom_right",
+   "episode_index": 19,
+   "start": 63,
+   "length": 101,
+   "sample_id": "indomain__lirislab__fold_bottom_right__ep000019__t0063"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/fold_bottom_right",
+   "episode_index": 21,
+   "start": 51,
+   "length": 72,
+   "sample_id": "indomain__lirislab__fold_bottom_right__ep000021__t0051"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/guess_who_so100",
+   "episode_index": 25,
+   "start": 15,
+   "length": 63,
+   "sample_id": "indomain__lirislab__guess_who_so100__ep000025__t0015"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/guess_who_so100",
+   "episode_index": 60,
+   "start": 8,
+   "length": 41,
+   "sample_id": "indomain__lirislab__guess_who_so100__ep000060__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/guess_who_so100",
+   "episode_index": 71,
+   "start": 5,
+   "length": 47,
+   "sample_id": "indomain__lirislab__guess_who_so100__ep000071__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/guess_who_so100",
+   "episode_index": 75,
+   "start": 26,
+   "length": 43,
+   "sample_id": "indomain__lirislab__guess_who_so100__ep000075__t0026"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/lemon_into_bowl",
+   "episode_index": 3,
+   "start": 46,
+   "length": 98,
+   "sample_id": "indomain__lirislab__lemon_into_bowl__ep000003__t0046"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/lemon_into_bowl",
+   "episode_index": 5,
+   "start": 31,
+   "length": 87,
+   "sample_id": "indomain__lirislab__lemon_into_bowl__ep000005__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/open_top_drawer_teabox",
+   "episode_index": 11,
+   "start": 37,
+   "length": 66,
+   "sample_id": "indomain__lirislab__open_top_drawer_teabox__ep000011__t0037"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/open_top_drawer_teabox",
+   "episode_index": 21,
+   "start": 11,
+   "length": 82,
+   "sample_id": "indomain__lirislab__open_top_drawer_teabox__ep000021__t0011"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/push_cup_target",
+   "episode_index": 16,
+   "start": 13,
+   "length": 53,
+   "sample_id": "indomain__lirislab__push_cup_target__ep000016__t0013"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/push_cup_target",
+   "episode_index": 28,
+   "start": 28,
+   "length": 51,
+   "sample_id": "indomain__lirislab__push_cup_target__ep000028__t0028"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/put_banana_bowl",
+   "episode_index": 14,
+   "start": 21,
+   "length": 73,
+   "sample_id": "indomain__lirislab__put_banana_bowl__ep000014__t0021"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/put_banana_bowl",
+   "episode_index": 17,
+   "start": 37,
+   "length": 73,
+   "sample_id": "indomain__lirislab__put_banana_bowl__ep000017__t0037"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/put_caps_into_teabox",
+   "episode_index": 0,
+   "start": 42,
+   "length": 65,
+   "sample_id": "indomain__lirislab__put_caps_into_teabox__ep000000__t0042"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/put_caps_into_teabox",
+   "episode_index": 28,
+   "start": 44,
+   "length": 62,
+   "sample_id": "indomain__lirislab__put_caps_into_teabox__ep000028__t0044"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/put_coffee_cap_teabox",
+   "episode_index": 4,
+   "start": 50,
+   "length": 74,
+   "sample_id": "indomain__lirislab__put_coffee_cap_teabox__ep000004__t0050"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/put_coffee_cap_teabox",
+   "episode_index": 16,
+   "start": 60,
+   "length": 84,
+   "sample_id": "indomain__lirislab__put_coffee_cap_teabox__ep000016__t0060"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/red_cube_into_blue_cube",
+   "episode_index": 6,
+   "start": 24,
+   "length": 67,
+   "sample_id": "indomain__lirislab__red_cube_into_blue_cube__ep000006__t0024"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/red_cube_into_blue_cube",
+   "episode_index": 28,
+   "start": 25,
+   "length": 58,
+   "sample_id": "indomain__lirislab__red_cube_into_blue_cube__ep000028__t0025"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/red_cube_into_green_lego_block",
+   "episode_index": 0,
+   "start": 0,
+   "length": 36,
+   "sample_id": "indomain__lirislab__red_cube_into_green_lego_block__ep000000__t0000"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/red_cube_into_green_lego_block",
+   "episode_index": 20,
+   "start": 6,
+   "length": 88,
+   "sample_id": "indomain__lirislab__red_cube_into_green_lego_block__ep000020__t0006"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/so100_demo",
+   "episode_index": 13,
+   "start": 75,
+   "length": 119,
+   "sample_id": "indomain__lirislab__so100_demo__ep000013__t0075"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/sweep_tissue_cube",
+   "episode_index": 12,
+   "start": 81,
+   "length": 99,
+   "sample_id": "indomain__lirislab__sweep_tissue_cube__ep000012__t0081"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/sweep_tissue_cube",
+   "episode_index": 23,
+   "start": 44,
+   "length": 113,
+   "sample_id": "indomain__lirislab__sweep_tissue_cube__ep000023__t0044"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/unfold_bottom_right",
+   "episode_index": 9,
+   "start": 14,
+   "length": 62,
+   "sample_id": "indomain__lirislab__unfold_bottom_right__ep000009__t0014"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "lirislab/unfold_bottom_right",
+   "episode_index": 13,
+   "start": 23,
+   "length": 61,
+   "sample_id": "indomain__lirislab__unfold_bottom_right__ep000013__t0023"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "liuhuanjim013/so100_th",
+   "episode_index": 40,
+   "start": 5,
+   "length": 146,
+   "sample_id": "indomain__liuhuanjim013__so100_th__ep000040__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "liuhuanjim013/so100_th",
+   "episode_index": 53,
+   "start": 75,
+   "length": 101,
+   "sample_id": "indomain__liuhuanjim013__so100_th__ep000053__t0075"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "liuhuanjim013/so100_th",
+   "episode_index": 57,
+   "start": 58,
+   "length": 100,
+   "sample_id": "indomain__liuhuanjim013__so100_th__ep000057__t0058"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "liuhuanjim013/so100_th",
+   "episode_index": 65,
+   "start": 19,
+   "length": 84,
+   "sample_id": "indomain__liuhuanjim013__so100_th__ep000065__t0019"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "mikechambers/block_cup_14",
+   "episode_index": 38,
+   "start": 7,
+   "length": 90,
+   "sample_id": "indomain__mikechambers__block_cup_14__ep000038__t0007"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "mikechambers/block_cup_14",
+   "episode_index": 41,
+   "start": 49,
+   "length": 90,
+   "sample_id": "indomain__mikechambers__block_cup_14__ep000041__t0049"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "nbaron99/so100_pick_and_place4",
+   "episode_index": 2,
+   "start": 29,
+   "length": 59,
+   "sample_id": "indomain__nbaron99__so100_pick_and_place4__ep000002__t0029"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "nbaron99/so100_pick_and_place4",
+   "episode_index": 13,
+   "start": 39,
+   "length": 59,
+   "sample_id": "indomain__nbaron99__so100_pick_and_place4__ep000013__t0039"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "nbaron99/so100_pick_and_place4",
+   "episode_index": 65,
+   "start": 38,
+   "length": 60,
+   "sample_id": "indomain__nbaron99__so100_pick_and_place4__ep000065__t0038"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "nbaron99/so100_pick_and_place4",
+   "episode_index": 96,
+   "start": 1,
+   "length": 60,
+   "sample_id": "indomain__nbaron99__so100_pick_and_place4__ep000096__t0001"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pandaRQ/pick_med_1",
+   "episode_index": 14,
+   "start": 17,
+   "length": 104,
+   "sample_id": "indomain__pandaRQ__pick_med_1__ep000014__t0017"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pandaRQ/pick_med_1",
+   "episode_index": 23,
+   "start": 1,
+   "length": 87,
+   "sample_id": "indomain__pandaRQ__pick_med_1__ep000023__t0001"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pandaRQ/pick_med_1",
+   "episode_index": 44,
+   "start": 70,
+   "length": 92,
+   "sample_id": "indomain__pandaRQ__pick_med_1__ep000044__t0070"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pandaRQ/pick_med_1",
+   "episode_index": 97,
+   "start": 26,
+   "length": 108,
+   "sample_id": "indomain__pandaRQ__pick_med_1__ep000097__t0026"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_lego",
+   "episode_index": 32,
+   "start": 0,
+   "length": 169,
+   "sample_id": "indomain__paszea__so100_lego__ep000032__t0000"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_lego",
+   "episode_index": 45,
+   "start": 0,
+   "length": 133,
+   "sample_id": "indomain__paszea__so100_lego__ep000045__t0000"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_lego_2cam",
+   "episode_index": 2,
+   "start": 212,
+   "length": 366,
+   "sample_id": "indomain__paszea__so100_lego_2cam__ep000002__t0212"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_lego_2cam",
+   "episode_index": 6,
+   "start": 406,
+   "length": 430,
+   "sample_id": "indomain__paszea__so100_lego_2cam__ep000006__t0406"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_whale_2",
+   "episode_index": 39,
+   "start": 29,
+   "length": 116,
+   "sample_id": "indomain__paszea__so100_whale_2__ep000039__t0029"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_whale_2",
+   "episode_index": 48,
+   "start": 77,
+   "length": 106,
+   "sample_id": "indomain__paszea__so100_whale_2__ep000048__t0077"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_whale_3",
+   "episode_index": 2,
+   "start": 100,
+   "length": 141,
+   "sample_id": "indomain__paszea__so100_whale_3__ep000002__t0100"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_whale_3",
+   "episode_index": 8,
+   "start": 91,
+   "length": 110,
+   "sample_id": "indomain__paszea__so100_whale_3__ep000008__t0091"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_whale_4",
+   "episode_index": 7,
+   "start": 75,
+   "length": 107,
+   "sample_id": "indomain__paszea__so100_whale_4__ep000007__t0075"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_whale_4",
+   "episode_index": 46,
+   "start": 81,
+   "length": 112,
+   "sample_id": "indomain__paszea__so100_whale_4__ep000046__t0081"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "paszea/so100_whale_4",
+   "episode_index": 53,
+   "start": 37,
+   "length": 99,
+   "sample_id": "indomain__paszea__so100_whale_4__ep000053__t0037"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/chicken",
+   "episode_index": 2,
+   "start": 64,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__chicken__ep000002__t0064"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/chicken",
+   "episode_index": 13,
+   "start": 46,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__chicken__ep000013__t0046"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/chicken",
+   "episode_index": 29,
+   "start": 50,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__chicken__ep000029__t0050"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/cow2",
+   "episode_index": 21,
+   "start": 8,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__cow2__ep000021__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/cow2",
+   "episode_index": 29,
+   "start": 79,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__cow2__ep000029__t0079"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/horse",
+   "episode_index": 6,
+   "start": 68,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__horse__ep000006__t0068"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/horse",
+   "episode_index": 18,
+   "start": 4,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__horse__ep000018__t0004"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/pig2",
+   "episode_index": 0,
+   "start": 9,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__pig2__ep000000__t0009"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/pig2",
+   "episode_index": 9,
+   "start": 65,
+   "length": 107,
+   "sample_id": "indomain__pierfabre__pig2__ep000009__t0065"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/pig3",
+   "episode_index": 25,
+   "start": 56,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__pig3__ep000025__t0056"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/pig3",
+   "episode_index": 49,
+   "start": 47,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__pig3__ep000049__t0047"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/rabbit",
+   "episode_index": 1,
+   "start": 0,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__rabbit__ep000001__t0000"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/rabbit",
+   "episode_index": 2,
+   "start": 3,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__rabbit__ep000002__t0003"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/sheep",
+   "episode_index": 12,
+   "start": 16,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__sheep__ep000012__t0016"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/sheep",
+   "episode_index": 27,
+   "start": 34,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__sheep__ep000027__t0034"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pierfabre/sheep",
+   "episode_index": 52,
+   "start": 8,
+   "length": 108,
+   "sample_id": "indomain__pierfabre__sheep__ep000052__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pietroom/actualeasytask",
+   "episode_index": 10,
+   "start": 20,
+   "length": 60,
+   "sample_id": "indomain__pietroom__actualeasytask__ep000010__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pietroom/actualeasytask",
+   "episode_index": 22,
+   "start": 24,
+   "length": 60,
+   "sample_id": "indomain__pietroom__actualeasytask__ep000022__t0024"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pietroom/actualeasytask",
+   "episode_index": 44,
+   "start": 35,
+   "length": 60,
+   "sample_id": "indomain__pietroom__actualeasytask__ep000044__t0035"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pietroom/holdthis",
+   "episode_index": 22,
+   "start": 70,
+   "length": 90,
+   "sample_id": "indomain__pietroom__holdthis__ep000022__t0070"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pietroom/holdthis",
+   "episode_index": 51,
+   "start": 40,
+   "length": 90,
+   "sample_id": "indomain__pietroom__holdthis__ep000051__t0040"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pietroom/holdthis",
+   "episode_index": 56,
+   "start": 22,
+   "length": 90,
+   "sample_id": "indomain__pietroom__holdthis__ep000056__t0022"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pietroom/holdthis",
+   "episode_index": 77,
+   "start": 31,
+   "length": 90,
+   "sample_id": "indomain__pietroom__holdthis__ep000077__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_carrot_2",
+   "episode_index": 33,
+   "start": 26,
+   "length": 75,
+   "sample_id": "indomain__pranavsaroha__so100_carrot_2__ep000033__t0026"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_carrot_2",
+   "episode_index": 35,
+   "start": 61,
+   "length": 80,
+   "sample_id": "indomain__pranavsaroha__so100_carrot_2__ep000035__t0061"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_carrot_2",
+   "episode_index": 44,
+   "start": 8,
+   "length": 68,
+   "sample_id": "indomain__pranavsaroha__so100_carrot_2__ep000044__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_carrot_5",
+   "episode_index": 8,
+   "start": 52,
+   "length": 72,
+   "sample_id": "indomain__pranavsaroha__so100_carrot_5__ep000008__t0052"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_carrot_5",
+   "episode_index": 28,
+   "start": 28,
+   "length": 76,
+   "sample_id": "indomain__pranavsaroha__so100_carrot_5__ep000028__t0028"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_carrot_5",
+   "episode_index": 31,
+   "start": 8,
+   "length": 79,
+   "sample_id": "indomain__pranavsaroha__so100_carrot_5__ep000031__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_legos4",
+   "episode_index": 6,
+   "start": 29,
+   "length": 329,
+   "sample_id": "indomain__pranavsaroha__so100_legos4__ep000006__t0029"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_legos4",
+   "episode_index": 7,
+   "start": 95,
+   "length": 329,
+   "sample_id": "indomain__pranavsaroha__so100_legos4__ep000007__t0095"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_legos4",
+   "episode_index": 54,
+   "start": 7,
+   "length": 27,
+   "sample_id": "indomain__pranavsaroha__so100_legos4__ep000054__t0007"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_onelego2",
+   "episode_index": 12,
+   "start": 18,
+   "length": 62,
+   "sample_id": "indomain__pranavsaroha__so100_onelego2__ep000012__t0018"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_onelego2",
+   "episode_index": 23,
+   "start": 33,
+   "length": 68,
+   "sample_id": "indomain__pranavsaroha__so100_onelego2__ep000023__t0033"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_onelego3",
+   "episode_index": 16,
+   "start": 23,
+   "length": 72,
+   "sample_id": "indomain__pranavsaroha__so100_onelego3__ep000016__t0023"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "pranavsaroha/so100_onelego3",
+   "episode_index": 37,
+   "start": 58,
+   "length": 85,
+   "sample_id": "indomain__pranavsaroha__so100_onelego3__ep000037__t0058"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/left-arm-grasp-lego-brick",
+   "episode_index": 20,
+   "start": 31,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__left-arm-grasp-lego-brick__ep000020__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/left-arm-grasp-lego-brick",
+   "episode_index": 58,
+   "start": 43,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__left-arm-grasp-lego-brick__ep000058__t0043"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/left-arm-grasp-lego-brick",
+   "episode_index": 60,
+   "start": 50,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__left-arm-grasp-lego-brick__ep000060__t0050"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/left-arm-grasp-lego-brick",
+   "episode_index": 93,
+   "start": 49,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__left-arm-grasp-lego-brick__ep000093__t0049"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team-7-left-arm-grasp-motor",
+   "episode_index": 9,
+   "start": 73,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team-7-left-arm-grasp-motor__ep000009__t0073"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team-7-left-arm-grasp-motor",
+   "episode_index": 14,
+   "start": 57,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team-7-left-arm-grasp-motor__ep000014__t0057"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team-7-left-arm-grasp-motor",
+   "episode_index": 21,
+   "start": 68,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team-7-left-arm-grasp-motor__ep000021__t0068"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team-7-left-arm-grasp-motor",
+   "episode_index": 56,
+   "start": 61,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team-7-left-arm-grasp-motor__ep000056__t0061"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team-7-right-arm-grasp-tape",
+   "episode_index": 24,
+   "start": 20,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team-7-right-arm-grasp-tape__ep000024__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team-7-right-arm-grasp-tape",
+   "episode_index": 31,
+   "start": 45,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team-7-right-arm-grasp-tape__ep000031__t0045"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team-7-right-arm-grasp-tape",
+   "episode_index": 60,
+   "start": 55,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team-7-right-arm-grasp-tape__ep000060__t0055"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team-7-right-arm-grasp-tape",
+   "episode_index": 63,
+   "start": 65,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team-7-right-arm-grasp-tape__ep000063__t0065"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team13-three-balls-stacking",
+   "episode_index": 35,
+   "start": 71,
+   "length": 96,
+   "sample_id": "indomain__roboticshack__team13-three-balls-stacking__ep000035__t0071"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team13-three-balls-stacking",
+   "episode_index": 51,
+   "start": 10,
+   "length": 100,
+   "sample_id": "indomain__roboticshack__team13-three-balls-stacking__ep000051__t0010"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team13-three-balls-stacking",
+   "episode_index": 96,
+   "start": 68,
+   "length": 89,
+   "sample_id": "indomain__roboticshack__team13-three-balls-stacking__ep000096__t0068"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team13-three-balls-stacking",
+   "episode_index": 100,
+   "start": 78,
+   "length": 107,
+   "sample_id": "indomain__roboticshack__team13-three-balls-stacking__ep000100__t0078"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team13-two-balls-stacking",
+   "episode_index": 24,
+   "start": 9,
+   "length": 52,
+   "sample_id": "indomain__roboticshack__team13-two-balls-stacking__ep000024__t0009"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team13-two-balls-stacking",
+   "episode_index": 26,
+   "start": 12,
+   "length": 56,
+   "sample_id": "indomain__roboticshack__team13-two-balls-stacking__ep000026__t0012"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team13-two-balls-stacking",
+   "episode_index": 36,
+   "start": 14,
+   "length": 43,
+   "sample_id": "indomain__roboticshack__team13-two-balls-stacking__ep000036__t0014"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team16-can-stacking",
+   "episode_index": 15,
+   "start": 4,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team16-can-stacking__ep000015__t0004"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team16-can-stacking",
+   "episode_index": 32,
+   "start": 12,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team16-can-stacking__ep000032__t0012"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team16-water-pouring",
+   "episode_index": 2,
+   "start": 88,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team16-water-pouring__ep000002__t0088"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team16-water-pouring",
+   "episode_index": 3,
+   "start": 86,
+   "length": 120,
+   "sample_id": "indomain__roboticshack__team16-water-pouring__ep000003__t0086"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team9-pick_chicken_place_plate",
+   "episode_index": 3,
+   "start": 19,
+   "length": 55,
+   "sample_id": "indomain__roboticshack__team9-pick_chicken_place_plate__ep000003__t0019"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team9-pick_chicken_place_plate",
+   "episode_index": 5,
+   "start": 7,
+   "length": 58,
+   "sample_id": "indomain__roboticshack__team9-pick_chicken_place_plate__ep000005__t0007"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team9-pick_chicken_place_plate",
+   "episode_index": 19,
+   "start": 36,
+   "length": 65,
+   "sample_id": "indomain__roboticshack__team9-pick_chicken_place_plate__ep000019__t0036"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team9-pick_cube_place_static_plate",
+   "episode_index": 2,
+   "start": 42,
+   "length": 62,
+   "sample_id": "indomain__roboticshack__team9-pick_cube_place_static_plate__ep000002__t0042"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "roboticshack/team9-pick_cube_place_static_plate",
+   "episode_index": 12,
+   "start": 0,
+   "length": 63,
+   "sample_id": "indomain__roboticshack__team9-pick_cube_place_static_plate__ep000012__t0000"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samanthalhy/so100_herding_1",
+   "episode_index": 21,
+   "start": 480,
+   "length": 576,
+   "sample_id": "indomain__samanthalhy__so100_herding_1__ep000021__t0480"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samanthalhy/so100_herding_1",
+   "episode_index": 41,
+   "start": 231,
+   "length": 572,
+   "sample_id": "indomain__samanthalhy__so100_herding_1__ep000041__t0231"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/cube_reorientation_2",
+   "episode_index": 27,
+   "start": 46,
+   "length": 107,
+   "sample_id": "indomain__samsam0510__cube_reorientation_2__ep000027__t0046"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/cube_reorientation_2",
+   "episode_index": 43,
+   "start": 35,
+   "length": 113,
+   "sample_id": "indomain__samsam0510__cube_reorientation_2__ep000043__t0035"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/cube_reorientation_2",
+   "episode_index": 66,
+   "start": 64,
+   "length": 144,
+   "sample_id": "indomain__samsam0510__cube_reorientation_2__ep000066__t0064"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/cube_reorientation_2",
+   "episode_index": 127,
+   "start": 71,
+   "length": 90,
+   "sample_id": "indomain__samsam0510__cube_reorientation_2__ep000127__t0071"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/cube_reorientation_4",
+   "episode_index": 7,
+   "start": 94,
+   "length": 153,
+   "sample_id": "indomain__samsam0510__cube_reorientation_4__ep000007__t0094"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/cube_reorientation_4",
+   "episode_index": 44,
+   "start": 8,
+   "length": 75,
+   "sample_id": "indomain__samsam0510__cube_reorientation_4__ep000044__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/cube_reorientation_4",
+   "episode_index": 77,
+   "start": 76,
+   "length": 123,
+   "sample_id": "indomain__samsam0510__cube_reorientation_4__ep000077__t0076"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/cube_reorientation_4",
+   "episode_index": 97,
+   "start": 64,
+   "length": 101,
+   "sample_id": "indomain__samsam0510__cube_reorientation_4__ep000097__t0064"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/glove_reorientation_1",
+   "episode_index": 33,
+   "start": 20,
+   "length": 42,
+   "sample_id": "indomain__samsam0510__glove_reorientation_1__ep000033__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/glove_reorientation_1",
+   "episode_index": 37,
+   "start": 20,
+   "length": 54,
+   "sample_id": "indomain__samsam0510__glove_reorientation_1__ep000037__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/glove_reorientation_1",
+   "episode_index": 63,
+   "start": 20,
+   "length": 59,
+   "sample_id": "indomain__samsam0510__glove_reorientation_1__ep000063__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/glove_reorientation_1",
+   "episode_index": 90,
+   "start": 4,
+   "length": 45,
+   "sample_id": "indomain__samsam0510__glove_reorientation_1__ep000090__t0004"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/tooth_extraction_3",
+   "episode_index": 16,
+   "start": 28,
+   "length": 66,
+   "sample_id": "indomain__samsam0510__tooth_extraction_3__ep000016__t0028"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/tooth_extraction_3",
+   "episode_index": 41,
+   "start": 11,
+   "length": 73,
+   "sample_id": "indomain__samsam0510__tooth_extraction_3__ep000041__t0011"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/tooth_extraction_3",
+   "episode_index": 69,
+   "start": 39,
+   "length": 62,
+   "sample_id": "indomain__samsam0510__tooth_extraction_3__ep000069__t0039"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/tooth_extraction_3",
+   "episode_index": 83,
+   "start": 44,
+   "length": 70,
+   "sample_id": "indomain__samsam0510__tooth_extraction_3__ep000083__t0044"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/tooth_extraction_4",
+   "episode_index": 28,
+   "start": 10,
+   "length": 46,
+   "sample_id": "indomain__samsam0510__tooth_extraction_4__ep000028__t0010"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/tooth_extraction_4",
+   "episode_index": 100,
+   "start": 5,
+   "length": 87,
+   "sample_id": "indomain__samsam0510__tooth_extraction_4__ep000100__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/tooth_extraction_4",
+   "episode_index": 128,
+   "start": 76,
+   "length": 106,
+   "sample_id": "indomain__samsam0510__tooth_extraction_4__ep000128__t0076"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "samsam0510/tooth_extraction_4",
+   "episode_index": 195,
+   "start": 50,
+   "length": 82,
+   "sample_id": "indomain__samsam0510__tooth_extraction_4__ep000195__t0050"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "shreyasgite/so100_base_env",
+   "episode_index": 10,
+   "start": 13,
+   "length": 90,
+   "sample_id": "indomain__shreyasgite__so100_base_env__ep000010__t0013"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "shreyasgite/so100_base_env",
+   "episode_index": 108,
+   "start": 18,
+   "length": 90,
+   "sample_id": "indomain__shreyasgite__so100_base_env__ep000108__t0018"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "shreyasgite/so100_base_env",
+   "episode_index": 118,
+   "start": 58,
+   "length": 79,
+   "sample_id": "indomain__shreyasgite__so100_base_env__ep000118__t0058"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "shreyasgite/so100_base_env",
+   "episode_index": 120,
+   "start": 65,
+   "length": 85,
+   "sample_id": "indomain__shreyasgite__so100_base_env__ep000120__t0065"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "shreyasgite/so100_legocube_50",
+   "episode_index": 2,
+   "start": 14,
+   "length": 90,
+   "sample_id": "indomain__shreyasgite__so100_legocube_50__ep000002__t0014"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "shreyasgite/so100_legocube_50",
+   "episode_index": 31,
+   "start": 21,
+   "length": 90,
+   "sample_id": "indomain__shreyasgite__so100_legocube_50__ep000031__t0021"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/mond_1",
+   "episode_index": 5,
+   "start": 59,
+   "length": 117,
+   "sample_id": "indomain__sihyun77__mond_1__ep000005__t0059"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/mond_1",
+   "episode_index": 14,
+   "start": 73,
+   "length": 117,
+   "sample_id": "indomain__sihyun77__mond_1__ep000014__t0073"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/sihyun_3_17_2",
+   "episode_index": 0,
+   "start": 17,
+   "length": 80,
+   "sample_id": "indomain__sihyun77__sihyun_3_17_2__ep000000__t0017"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/sihyun_3_17_2",
+   "episode_index": 14,
+   "start": 37,
+   "length": 170,
+   "sample_id": "indomain__sihyun77__sihyun_3_17_2__ep000014__t0037"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/sihyun_3_17_5",
+   "episode_index": 25,
+   "start": 183,
+   "length": 233,
+   "sample_id": "indomain__sihyun77__sihyun_3_17_5__ep000025__t0183"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/sihyun_main_2",
+   "episode_index": 31,
+   "start": 66,
+   "length": 117,
+   "sample_id": "indomain__sihyun77__sihyun_main_2__ep000031__t0066"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/sihyun_main_2",
+   "episode_index": 41,
+   "start": 41,
+   "length": 117,
+   "sample_id": "indomain__sihyun77__sihyun_main_2__ep000041__t0041"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/sihyun_main_3",
+   "episode_index": 19,
+   "start": 62,
+   "length": 117,
+   "sample_id": "indomain__sihyun77__sihyun_main_3__ep000019__t0062"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/sihyun_main_3",
+   "episode_index": 23,
+   "start": 5,
+   "length": 117,
+   "sample_id": "indomain__sihyun77__sihyun_main_3__ep000023__t0005"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/suho_3_17_1",
+   "episode_index": 10,
+   "start": 86,
+   "length": 175,
+   "sample_id": "indomain__sihyun77__suho_3_17_1__ep000010__t0086"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/suho_3_17_1",
+   "episode_index": 21,
+   "start": 133,
+   "length": 166,
+   "sample_id": "indomain__sihyun77__suho_3_17_1__ep000021__t0133"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/suho_3_17_3",
+   "episode_index": 16,
+   "start": 38,
+   "length": 132,
+   "sample_id": "indomain__sihyun77__suho_3_17_3__ep000016__t0038"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/suho_3_17_3",
+   "episode_index": 46,
+   "start": 54,
+   "length": 127,
+   "sample_id": "indomain__sihyun77__suho_3_17_3__ep000046__t0054"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/suho_main_2",
+   "episode_index": 27,
+   "start": 50,
+   "length": 116,
+   "sample_id": "indomain__sihyun77__suho_main_2__ep000027__t0050"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/suho_main_2",
+   "episode_index": 36,
+   "start": 43,
+   "length": 117,
+   "sample_id": "indomain__sihyun77__suho_main_2__ep000036__t0043"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sihyun77/suho_main_2",
+   "episode_index": 39,
+   "start": 92,
+   "length": 117,
+   "sample_id": "indomain__sihyun77__suho_main_2__ep000039__t0092"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sixpigs1/so100_pick_cube_in_box",
+   "episode_index": 11,
+   "start": 27,
+   "length": 70,
+   "sample_id": "indomain__sixpigs1__so100_pick_cube_in_box__ep000011__t0027"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sixpigs1/so100_pick_cube_in_box",
+   "episode_index": 29,
+   "start": 36,
+   "length": 58,
+   "sample_id": "indomain__sixpigs1__so100_pick_cube_in_box__ep000029__t0036"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sixpigs1/so100_pick_cube_in_box",
+   "episode_index": 57,
+   "start": 18,
+   "length": 49,
+   "sample_id": "indomain__sixpigs1__so100_pick_cube_in_box__ep000057__t0018"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sixpigs1/so100_pick_cube_in_box",
+   "episode_index": 85,
+   "start": 20,
+   "length": 55,
+   "sample_id": "indomain__sixpigs1__so100_pick_cube_in_box__ep000085__t0020"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sixpigs1/so100_stack_cube_error",
+   "episode_index": 1,
+   "start": 16,
+   "length": 58,
+   "sample_id": "indomain__sixpigs1__so100_stack_cube_error__ep000001__t0016"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sixpigs1/so100_stack_cube_error",
+   "episode_index": 8,
+   "start": 8,
+   "length": 64,
+   "sample_id": "indomain__sixpigs1__so100_stack_cube_error__ep000008__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sixpigs1/so100_stack_cube_error",
+   "episode_index": 31,
+   "start": 0,
+   "length": 60,
+   "sample_id": "indomain__sixpigs1__so100_stack_cube_error__ep000031__t0000"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "sixpigs1/so100_stack_cube_error",
+   "episode_index": 79,
+   "start": 13,
+   "length": 55,
+   "sample_id": "indomain__sixpigs1__so100_stack_cube_error__ep000079__t0013"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "tkc79/so100_lego_box_1",
+   "episode_index": 45,
+   "start": 31,
+   "length": 90,
+   "sample_id": "indomain__tkc79__so100_lego_box_1__ep000045__t0031"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "tkc79/so100_lego_box_1",
+   "episode_index": 67,
+   "start": 72,
+   "length": 90,
+   "sample_id": "indomain__tkc79__so100_lego_box_1__ep000067__t0072"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "tkc79/so100_lego_box_1",
+   "episode_index": 73,
+   "start": 8,
+   "length": 90,
+   "sample_id": "indomain__tkc79__so100_lego_box_1__ep000073__t0008"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "tkc79/so100_lego_box_1",
+   "episode_index": 82,
+   "start": 73,
+   "length": 90,
+   "sample_id": "indomain__tkc79__so100_lego_box_1__ep000082__t0073"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "tkc79/so100_lego_box_2",
+   "episode_index": 7,
+   "start": 55,
+   "length": 90,
+   "sample_id": "indomain__tkc79__so100_lego_box_2__ep000007__t0055"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "tkc79/so100_lego_box_2",
+   "episode_index": 14,
+   "start": 72,
+   "length": 90,
+   "sample_id": "indomain__tkc79__so100_lego_box_2__ep000014__t0072"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "triton7777/so100_dataset_mix",
+   "episode_index": 22,
+   "start": 155,
+   "length": 536,
+   "sample_id": "indomain__triton7777__so100_dataset_mix__ep000022__t0155"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "triton7777/so100_dataset_mix",
+   "episode_index": 40,
+   "start": 1,
+   "length": 60,
+   "sample_id": "indomain__triton7777__so100_dataset_mix__ep000040__t0001"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "triton7777/so100_dataset_mix",
+   "episode_index": 47,
+   "start": 22,
+   "length": 60,
+   "sample_id": "indomain__triton7777__so100_dataset_mix__ep000047__t0022"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "vladfatu/so100_above",
+   "episode_index": 38,
+   "start": 91,
+   "length": 120,
+   "sample_id": "indomain__vladfatu__so100_above__ep000038__t0091"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "vladfatu/so100_above",
+   "episode_index": 48,
+   "start": 103,
+   "length": 120,
+   "sample_id": "indomain__vladfatu__so100_above__ep000048__t0103"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "vladfatu/so100_office",
+   "episode_index": 23,
+   "start": 102,
+   "length": 120,
+   "sample_id": "indomain__vladfatu__so100_office__ep000023__t0102"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "vladfatu/so100_office",
+   "episode_index": 42,
+   "start": 25,
+   "length": 120,
+   "sample_id": "indomain__vladfatu__so100_office__ep000042__t0025"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "weiye11/so100_410_zwy",
+   "episode_index": 7,
+   "start": 36,
+   "length": 82,
+   "sample_id": "indomain__weiye11__so100_410_zwy__ep000007__t0036"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "weiye11/so100_410_zwy",
+   "episode_index": 40,
+   "start": 48,
+   "length": 76,
+   "sample_id": "indomain__weiye11__so100_410_zwy__ep000040__t0048"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "weiye11/so100_410_zwy",
+   "episode_index": 65,
+   "start": 15,
+   "length": 74,
+   "sample_id": "indomain__weiye11__so100_410_zwy__ep000065__t0015"
+  },
+  {
+   "tier": "indomain",
+   "dataset": "weiye11/so100_410_zwy",
+   "episode_index": 79,
+   "start": 45,
+   "length": 64,
+   "sample_id": "indomain__weiye11__so100_410_zwy__ep000079__t0045"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 0,
+   "start": 1,
+   "length": 17,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000000__t0001"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 1,
+   "start": 24,
+   "length": 40,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000001__t0024"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 2,
+   "start": 6,
+   "length": 29,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000002__t0006"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 3,
+   "start": 2,
+   "length": 53,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000003__t0002"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 4,
+   "start": 16,
+   "length": 50,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000004__t0016"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 5,
+   "start": 30,
+   "length": 46,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000005__t0030"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 6,
+   "start": 32,
+   "length": 52,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000006__t0032"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 7,
+   "start": 15,
+   "length": 34,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000007__t0015"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 8,
+   "start": 12,
+   "length": 43,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000008__t0012"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 9,
+   "start": 38,
+   "length": 84,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000009__t0038"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 10,
+   "start": 30,
+   "length": 58,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000010__t0030"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 11,
+   "start": 45,
+   "length": 95,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000011__t0045"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 12,
+   "start": 18,
+   "length": 43,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000012__t0018"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 13,
+   "start": 13,
+   "length": 51,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000013__t0013"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 14,
+   "start": 16,
+   "length": 34,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000014__t0016"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 15,
+   "start": 4,
+   "length": 36,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000015__t0004"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 16,
+   "start": 18,
+   "length": 70,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000016__t0018"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 17,
+   "start": 4,
+   "length": 43,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000017__t0004"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 18,
+   "start": 6,
+   "length": 52,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000018__t0006"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 19,
+   "start": 79,
+   "length": 109,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000019__t0079"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 20,
+   "start": 64,
+   "length": 172,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000020__t0064"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 21,
+   "start": 8,
+   "length": 27,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000021__t0008"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 22,
+   "start": 22,
+   "length": 39,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000022__t0022"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 23,
+   "start": 51,
+   "length": 73,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000023__t0051"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 24,
+   "start": 19,
+   "length": 35,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000024__t0019"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 25,
+   "start": 4,
+   "length": 40,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000025__t0004"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 26,
+   "start": 4,
+   "length": 28,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000026__t0004"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 27,
+   "start": 6,
+   "length": 67,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000027__t0006"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 28,
+   "start": 11,
+   "length": 29,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000028__t0011"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "aractingi/push_cube_offline_data",
+   "episode_index": 29,
+   "start": 2,
+   "length": 42,
+   "sample_id": "unseen_cousin__aractingi__push_cube_offline_data__ep000029__t0002"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 0,
+   "start": 43,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000000__t0043"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 1,
+   "start": 21,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000001__t0021"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 2,
+   "start": 30,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000002__t0030"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 3,
+   "start": 35,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000003__t0035"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 4,
+   "start": 6,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000004__t0006"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 5,
+   "start": 22,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000005__t0022"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 6,
+   "start": 27,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000006__t0027"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 7,
+   "start": 20,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000007__t0020"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 8,
+   "start": 39,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000008__t0039"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 9,
+   "start": 40,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000009__t0040"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 10,
+   "start": 13,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000010__t0013"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 11,
+   "start": 35,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000011__t0035"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 12,
+   "start": 30,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000012__t0030"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 13,
+   "start": 28,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000013__t0028"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 14,
+   "start": 33,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000014__t0033"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 15,
+   "start": 16,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000015__t0016"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 16,
+   "start": 3,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000016__t0003"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 17,
+   "start": 35,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000017__t0035"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 18,
+   "start": 0,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000018__t0000"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 19,
+   "start": 5,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000019__t0005"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 20,
+   "start": 25,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000020__t0025"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 21,
+   "start": 42,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000021__t0042"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 22,
+   "start": 40,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000022__t0040"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 23,
+   "start": 0,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000023__t0000"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 24,
+   "start": 39,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000024__t0039"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 25,
+   "start": 31,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000025__t0031"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 26,
+   "start": 21,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000026__t0021"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 27,
+   "start": 15,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000027__t0015"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 28,
+   "start": 20,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000028__t0020"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 29,
+   "start": 4,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000029__t0004"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 30,
+   "start": 12,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000030__t0012"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 31,
+   "start": 36,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000031__t0036"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 32,
+   "start": 14,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000032__t0014"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 33,
+   "start": 15,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000033__t0015"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 34,
+   "start": 9,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000034__t0009"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 35,
+   "start": 34,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000035__t0034"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 36,
+   "start": 28,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000036__t0028"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 37,
+   "start": 5,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000037__t0005"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 38,
+   "start": 5,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000038__t0005"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 39,
+   "start": 20,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000039__t0020"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 40,
+   "start": 32,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000040__t0032"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 41,
+   "start": 31,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000041__t0031"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 42,
+   "start": 6,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000042__t0006"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 43,
+   "start": 19,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000043__t0019"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 44,
+   "start": 35,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000044__t0035"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 45,
+   "start": 18,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000045__t0018"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 46,
+   "start": 7,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000046__t0007"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 47,
+   "start": 35,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000047__t0035"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 48,
+   "start": 21,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000048__t0021"
+  },
+  {
+   "tier": "unseen_cousin",
+   "dataset": "frk2/so100large",
+   "episode_index": 49,
+   "start": 34,
+   "length": 60,
+   "sample_id": "unseen_cousin__frk2__so100large__ep000049__t0034"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 0,
+   "start": 6,
+   "length": 44,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000000__t0006"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 1,
+   "start": 38,
+   "length": 58,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000001__t0038"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 2,
+   "start": 35,
+   "length": 69,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000002__t0035"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 3,
+   "start": 37,
+   "length": 67,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000003__t0037"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 4,
+   "start": 18,
+   "length": 63,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000004__t0018"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 5,
+   "start": 28,
+   "length": 62,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000005__t0028"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 6,
+   "start": 5,
+   "length": 59,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000006__t0005"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 7,
+   "start": 38,
+   "length": 60,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000007__t0038"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 8,
+   "start": 24,
+   "length": 56,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000008__t0024"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 9,
+   "start": 20,
+   "length": 57,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000009__t0020"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 10,
+   "start": 36,
+   "length": 72,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000010__t0036"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 11,
+   "start": 15,
+   "length": 71,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000011__t0015"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 12,
+   "start": 18,
+   "length": 64,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000012__t0018"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 13,
+   "start": 11,
+   "length": 63,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000013__t0011"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 14,
+   "start": 12,
+   "length": 65,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000014__t0012"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 15,
+   "start": 11,
+   "length": 62,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000015__t0011"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 16,
+   "start": 2,
+   "length": 63,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000016__t0002"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 17,
+   "start": 39,
+   "length": 67,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000017__t0039"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 18,
+   "start": 42,
+   "length": 67,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000018__t0042"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 19,
+   "start": 16,
+   "length": 66,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000019__t0016"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 20,
+   "start": 60,
+   "length": 79,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000020__t0060"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 21,
+   "start": 4,
+   "length": 78,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000021__t0004"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 22,
+   "start": 5,
+   "length": 74,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000022__t0005"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 23,
+   "start": 16,
+   "length": 81,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000023__t0016"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 24,
+   "start": 19,
+   "length": 80,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000024__t0019"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 25,
+   "start": 4,
+   "length": 82,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000025__t0004"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 26,
+   "start": 53,
+   "length": 70,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000026__t0053"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 27,
+   "start": 10,
+   "length": 79,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000027__t0010"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 28,
+   "start": 57,
+   "length": 73,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000028__t0057"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 29,
+   "start": 50,
+   "length": 84,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000029__t0050"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 30,
+   "start": 45,
+   "length": 67,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000030__t0045"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 31,
+   "start": 33,
+   "length": 72,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000031__t0033"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 32,
+   "start": 17,
+   "length": 65,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000032__t0017"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 33,
+   "start": 33,
+   "length": 78,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000033__t0033"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 34,
+   "start": 15,
+   "length": 63,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000034__t0015"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 35,
+   "start": 13,
+   "length": 61,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000035__t0013"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 36,
+   "start": 37,
+   "length": 58,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000036__t0037"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 37,
+   "start": 26,
+   "length": 65,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000037__t0026"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 38,
+   "start": 37,
+   "length": 67,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000038__t0037"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 39,
+   "start": 17,
+   "length": 58,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000039__t0017"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 40,
+   "start": 28,
+   "length": 72,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000040__t0028"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 41,
+   "start": 31,
+   "length": 70,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000041__t0031"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 42,
+   "start": 45,
+   "length": 83,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000042__t0045"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 43,
+   "start": 5,
+   "length": 60,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000043__t0005"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 44,
+   "start": 20,
+   "length": 59,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000044__t0020"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 45,
+   "start": 39,
+   "length": 64,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000045__t0039"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 46,
+   "start": 7,
+   "length": 65,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000046__t0007"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 47,
+   "start": 31,
+   "length": 54,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000047__t0031"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 48,
+   "start": 37,
+   "length": 56,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000048__t0037"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "CSCSXX/pick_place_cube_1.18",
+   "episode_index": 49,
+   "start": 21,
+   "length": 47,
+   "sample_id": "unseen_general__CSCSXX__pick_place_cube_1.18__ep000049__t0021"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 0,
+   "start": 24,
+   "length": 86,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000000__t0024"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 1,
+   "start": 31,
+   "length": 103,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000001__t0031"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 2,
+   "start": 2,
+   "length": 86,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000002__t0002"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 3,
+   "start": 34,
+   "length": 100,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000003__t0034"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 4,
+   "start": 14,
+   "length": 96,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000004__t0014"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 5,
+   "start": 28,
+   "length": 81,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000005__t0028"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 6,
+   "start": 47,
+   "length": 84,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000006__t0047"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 7,
+   "start": 50,
+   "length": 78,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000007__t0050"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 8,
+   "start": 21,
+   "length": 93,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000008__t0021"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 9,
+   "start": 42,
+   "length": 101,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000009__t0042"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 10,
+   "start": 54,
+   "length": 95,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000010__t0054"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 11,
+   "start": 3,
+   "length": 55,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000011__t0003"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 12,
+   "start": 12,
+   "length": 104,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000012__t0012"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 13,
+   "start": 18,
+   "length": 106,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000013__t0018"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 14,
+   "start": 28,
+   "length": 103,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000014__t0028"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 15,
+   "start": 5,
+   "length": 90,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000015__t0005"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 16,
+   "start": 104,
+   "length": 133,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000016__t0104"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 17,
+   "start": 9,
+   "length": 82,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000017__t0009"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 18,
+   "start": 3,
+   "length": 113,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000018__t0003"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 19,
+   "start": 15,
+   "length": 85,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000019__t0015"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 21,
+   "start": 81,
+   "length": 128,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000021__t0081"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 22,
+   "start": 24,
+   "length": 119,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000022__t0024"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 23,
+   "start": 77,
+   "length": 117,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000023__t0077"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 24,
+   "start": 73,
+   "length": 100,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000024__t0073"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 25,
+   "start": 15,
+   "length": 100,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000025__t0015"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 26,
+   "start": 50,
+   "length": 80,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000026__t0050"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 27,
+   "start": 11,
+   "length": 114,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000027__t0011"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 28,
+   "start": 47,
+   "length": 129,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000028__t0047"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 29,
+   "start": 14,
+   "length": 82,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000029__t0014"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 30,
+   "start": 4,
+   "length": 94,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000030__t0004"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 31,
+   "start": 77,
+   "length": 100,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000031__t0077"
+  },
+  {
+   "tier": "unseen_general",
+   "dataset": "ZGGZZG/so100_drop0",
+   "episode_index": 32,
+   "start": 2,
+   "length": 133,
+   "sample_id": "unseen_general__ZGGZZG__so100_drop0__ep000032__t0002"
+  }
+ ]
+}

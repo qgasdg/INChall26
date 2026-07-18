@@ -8,12 +8,13 @@
 - [T, 7/18] W2 프롬프트 작성 (Wan2.2+A100, E2 게이트·손절 기준)
 
 ## 대기 (착수 전 여기서 "진행 중"으로 올릴 것)
-- 홀드아웃 v2 생성 [Y] — **선행조건 해소: T의 488 목록 커밋 완료([holdout_t488.json](../local_eval/holdout_t488.json)) + 절차 [14](14_홀드아웃_v2_절차.md) 확정.** Y가 make_holdout 확장 → v2 구축 착수 가능.
-- E1 스텝 스윕 (50→30/20/12 + guidance_rescale, 제출 없음) — **[Y 인수 합의됨](15_E1_분담_제안.md)** (T 승인 7/18). 선행: 홀드아웃 v2 채점 준비.
+- 홀드아웃 v2 **재앵커** [Y 예정] — 정적+베이스라인 기준행을 v2 unseen에서 측정 (T4 ~2h, E1 스윕 세션에서 겸행)
+- E1 스텝 스윕 (50→30/20/12 + guidance_rescale, 제출 없음) — **[Y 인수 합의됨](15_E1_분담_제안.md)** (T 승인 7/18). 선행 해소됨 — 재앵커와 같은 세션에서 착수 가능.
 - 룰북 v0.1 + 협업 프로토콜 T 승인 → v1.0 (7/18 전달 완료, 회신 대기)
 - Blackwell용 torch cu128 조정 (선행: E3 학습 서버 결정)
 
 ## 완료
+- [Y, 7/18] **홀드아웃 v2 구축 완료**: `local_eval/holdout_v2.json` = in-domain 326 + 사촌 80 + 일반 82 (seed 0 결정론, 편차 2건 문서화). 상세: [14 §구축 결과](14_홀드아웃_v2_절차.md)
 - [Y, 7/18] **exp-01 = S003 제출 완료: Public 0.3028326269 (팀 최고, 예측 오차 +0.0006) — 체인 정합 검증 통과 + 계정 제출 요건 충족.** 이종 best-of-2 무익 확정 덤. 상세: [submissions.csv](../results/submissions.csv)·[LOG](LOG.md)
 - (7/18까지의 완료 내역은 [LOG.md](LOG.md) 참조. 이후 완료 항목은 여기로 이동: 결과 링크 필수)
 - 원장: [local_lb.csv](../results/local_lb.csv) · 제출: [submissions.csv](../results/submissions.csv)
