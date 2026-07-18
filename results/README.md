@@ -5,7 +5,7 @@
 ## local_lb.csv — 실험별 로컬 리더보드
 | 컬럼 | 의미 |
 |---|---|
-| exp | expNN (exp04부터, 노션 exp03까지 사용됨) |
+| exp | 통합 체계 exp-NN (exp-01부터, docs/13_팀_룰북.md §1 — 과거 기록은 접미사 T/Y로 호칭) |
 | date, server, commit | 실행 날짜 / 실행 서버 이름 / 코드 커밋 해시 |
 | stage | E0~E8 사다리 단계 |
 | change | 직전 실험 대비 변경점 1줄 (단일 변수 원칙) |
