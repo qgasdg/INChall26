@@ -1,1 +1,2 @@
 date,exp,file,public_score,eval_action_mae,notes
+2026-07-18,exp-01,submission_static_y.csv,,0.4283,"S003 예정 — 예측 0.302228 (D+V 앵커 0.43636 가정). 제출 후 점수 기입"

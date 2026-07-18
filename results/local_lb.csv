@@ -1,1 +1,2 @@
 exp,date,server,commit,stage,change,eval_action_mae,dino_unseen,video_unseen,action_unseen_ref,dino_indomain,video_indomain,infer_min,notes
+exp-01,2026-07-18,kaggle-t4,841cb70,E0요건,"정적 216(crf10) 킷 CSV 생성 — 체인 검증",0.4283,,,,,,5.6,"킷 T4 336s. 맥 8GB CPU 불가. Action 팀원 대비 -0.0018(인코딩差)"
