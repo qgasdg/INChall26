@@ -17,11 +17,19 @@ dependencies = [
     "timm==1.0.28",
     "pyyaml==6.0.3",
     "omegaconf==2.3.1", # 킷 requirements 누락 버그 — ckpt 로드에 필수 (docs/08)
+    # 베이스라인 생성 경로 전용 (2026-07-20 추가) — 채점(submission_kit) 경로엔 불필요해서
+    # 여태 드러나지 않았다. Kaggle 이미지엔 기본 탑재라 커널에서도 안 터졌음.
+    # 없으면 generate_baseline_videos.py가 ModuleNotFoundError로 즉시 실패한다.
+    "opencv-python-headless>=4.7,<4.11", # lvdm.utils가 cv2 요구. numpy<2 호환 상한(4.11+는 numpy>=2)
+    "transformers==4.48.3",              # DynamiCrafter 텍스트 인코더
+    "open-clip-torch==2.22.0",           # 동 CLIP 임베더
+    "requests==2.32.5",
+    "kornia>=0.7,<0.9",                  # lvdm.modules.encoders.condition 이 요구 (킷 requirements에도 누락)
     # EDA·유틸
     "pandas==3.0.3",
     "pyarrow==25.0.0",
     "matplotlib==3.11.1",
-    "huggingface-hub==1.24.0",
+    "huggingface-hub==0.34.4", # transformers 4.48.3 제약(<1.0) — 킷 정합. 1.x는 HfFolder 제거로 패치 필요했음
     "tqdm==4.69.0",
     "setuptools<81",
 ]
