@@ -1,0 +1,7 @@
+axis,mae,share_of_total_pct,bias,abs_bias_over_mae_pct,mae_if_bias_removed
+shoulder_pan,0.8042,22.8,0.1157,14.4,0.7964
+shoulder_lift,0.7167,20.3,0.1291,18.0,0.7239
+elbow_flex,0.6945,19.7,0.4663,67.1,0.683
+gripper,0.5635,16.0,-0.0372,6.6,0.5657
+wrist_flex,0.5078,14.4,0.1208,23.8,0.5059
+wrist_roll,0.2393,6.8,0.0167,7.0,0.2406
