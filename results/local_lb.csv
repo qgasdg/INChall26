@@ -1,3 +1,7 @@
 exp,date,server,commit,stage,change,eval_action_mae,dino_unseen,video_unseen,action_unseen_ref,dino_indomain,video_indomain,infer_min,notes
 exp-01,2026-07-18,kaggle-t4,841cb70,E0요건,"정적 216(crf10) 킷 CSV 생성 — 체인 검증",0.4283,,,,,,5.6,"킷 T4 336s. 맥 8GB CPU 불가. Action 팀원 대비 -0.0018(인코딩差)"
 exp-02,2026-07-19,kaggle-t4,4341224,E1재앵커,"홀드아웃 v2 unseen 162 정적 재측정 (D+V 기준행)",0.4283,0.1487,0.0848,1.1195,,,0,"v2 재앵커 기준행(정적). dino=프레임평균(flatten 0.1490). 사촌 D 0.1430/V 0.0719, 일반 D 0.1543/V 0.0973. eval MAE는 exp-01 실측 재사용(동일 정적 예측). 채점 T4 311s/162. per-sample=results/exp-02_*.csv"
+exp-03,2026-07-19,kaggle-t4,4341224,E1,"베이스라인 재현 step50 (스윕 기준행 + v2 재앵커)",0.5801,0.5534,0.2195,1.0318,,,75.9,"T의 0.579 재현(+0.001). 생성 20.66s/샘플(중앙값). D+V는 v2 unseen 162 (dino=프레임평균, flatten 0.5524). per-sample=results/exp-03_* 2종"
+exp-04,2026-07-19,kaggle-t4,4341224,E1,"ddim_steps 50→30",0.5864,,,,,,66.8,"18.23s/샘플. MAE +0.0063 vs step50. 홀드아웃 미채점(스윕은 eval MAE만)"
+exp-05,2026-07-19,kaggle-t4,4341224,E1,"ddim_steps 50→20",0.5933,,,,,,63.1,"17.15s/샘플. 덤: guidance_rescale 0.7→0.0 probe에서 mp4 md5 216/216 동일 → CFG=1.0에선 rescale no-op 실증"
+exp-06,2026-07-19,kaggle-t4,4341224,E1,"ddim_steps 50→12",0.6016,,,,,,59.9,"16.33s/샘플. 곡선 적합: 고정 ~15.0s/샘플 + 0.114s/스텝 — 시간은 고정 오버헤드 지배"
