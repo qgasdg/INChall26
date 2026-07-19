@@ -6,9 +6,20 @@ cd "$(dirname "$0")/.."
 
 OPEN_SHA256="66552169b6d037a22a91b1c11497dff0ff1e8595b7a8c7aab957da999d128e8b"
 
+# curl 없는 이미지 대응 (bridge-aix jupyter 이미지 등) — wget 폴백
+fetch() { # fetch <url> [출력파일]  (출력파일 생략 시 stdout)
+    if command -v curl >/dev/null 2>&1; then
+        if [ $# -ge 2 ]; then curl -fL --retry 3 -C - -o "$2" "$1"; else curl -LsSf "$1"; fi
+    elif command -v wget >/dev/null 2>&1; then
+        if [ $# -ge 2 ]; then wget -c -O "$2" "$1"; else wget -qO- "$1"; fi
+    else
+        echo "curl/wget 둘 다 없음 — 하나 설치 필요" >&2; exit 1
+    fi
+}
+
 # 1) uv — 유저 공간 설치, sudo 불필요 (연구센터 공유 서버 호환)
 if ! command -v uv >/dev/null 2>&1; then
-    curl -LsSf https://astral.sh/uv/install.sh | sh
+    fetch https://astral.sh/uv/install.sh | sh
 fi
 export PATH="$HOME/.local/bin:$PATH"
 
@@ -19,7 +30,7 @@ uv sync
 OPEN_URL="https://cfiles.dacon.co.kr/competitions/236736/open.zip"
 if [ ! -f open.zip ]; then
     echo "open.zip 다운로드 (8.6GB, 데이콘 CDN)"
-    curl -fL --retry 3 -C - -o open.zip "$OPEN_URL"
+    fetch "$OPEN_URL" open.zip
 fi
 echo "${OPEN_SHA256}  open.zip" | sha256sum -c -
 if [ ! -d open/submission_kit ]; then
