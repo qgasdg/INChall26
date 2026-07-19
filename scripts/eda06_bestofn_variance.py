@@ -38,9 +38,15 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "local_eval"))
 CK = ROOT / "open" / "baseline" / "challenge_kit"
 KIT = ROOT / "open" / "submission_kit"
 EVAL = ROOT / "open" / "data" / "eval"
+
+from kit_bridge import KitScorer, TEMPORAL_LENGTH, get_device  # noqa: E402
+import kit_bridge  # noqa: E402
+
+kit = kit_bridge.kit
 
 
 def build_subset(sample_ids: list[str], out: Path) -> None:
@@ -68,20 +74,25 @@ def generate(root: Path, pred: Path, steps: int, seed: int, log: Path) -> float:
     return time.time() - t0
 
 
-def kit_action_mae(pred: Path, out_csv: Path) -> dict[str, float]:
-    subprocess.run([sys.executable, "make_submission_csv.py",
-                    "--prediction-root", str(pred.resolve()),
-                    "--output-csv", str(out_csv.resolve())], cwd=KIT, check=True,
-                   stdout=subprocess.DEVNULL)
-    maes = {}
-    with open(out_csv) as f:
-        for row in csv.DictReader(f):
-            if row["feature_component"] == "Action Component":
-                v = json.loads(row["feature_json"])
-                while isinstance(v, list):
-                    v = v[0]
-                maes[row["sample_id"]] = float(v)
-    return maes
+def action_mae_direct(pred: Path, scorer, act_root: Path) -> dict[str, float]:
+    """킷 추출기로 직접 Action MAE 계산.
+
+    킷의 make_submission_csv.py는 eval 216개 전량을 요구하므로 소표본에 쓸 수 없다.
+    대신 킷과 동일한 추출기·정규화를 쓰는 kit_bridge 경로를 쓴다.
+    이 경로가 킷 공식 산출값과 일치함은 exp-08에서 검증됐다(216개 평균 0.5877 일치,
+    scripts/eda11_action_axis_error.py).
+    """
+    import numpy as np
+    out = {}
+    for p_mp4 in sorted(pred.glob("*.mp4")):
+        sid = p_mp4.stem
+        gt_deg = np.load(act_root / f"{sid}.npy")
+        gen = kit.read_video_uint8(p_mp4, expected_frames=TEMPORAL_LENGTH).numpy()
+        video = scorer.to_eval_video(gen).unsqueeze(0)
+        pred_z = scorer.action_pred(video)[0]
+        gt_z = scorer.normalize_actions(gt_deg)
+        out[sid] = float((pred_z - gt_z).abs().mean())
+    return out
 
 
 def main() -> None:
@@ -106,11 +117,13 @@ def main() -> None:
     subset = work / "challenge_subset"
     build_subset(sample_ids, subset)
 
+    scorer = KitScorer(get_device(None))
+    act_root = EVAL / "actions"
     records, timings = [], []
     for seed in range(args.seeds):
         pred = work / f"pred_seed{seed}"
         gen_s = generate(subset, pred, args.steps, seed, work / f"gen_seed{seed}.log")
-        maes = kit_action_mae(pred, work / f"features_seed{seed}.csv")
+        maes = action_mae_direct(pred, scorer, act_root)
         for sid, mae in maes.items():
             records.append({"sample_id": sid, "seed": seed, "action_mae": mae})
         timings.append({"seed": seed, "gen_total_s": round(gen_s, 1),
