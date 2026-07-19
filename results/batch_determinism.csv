@@ -1,0 +1,4 @@
+batch_size,wall_s,per_sample_s,identical_to_batch1,speedup_vs_batch1
+1,134.9,16.86,8/8,1.0
+2,108.2,13.52,0/8,1.25
+4,95.3,11.92,0/8,1.41
