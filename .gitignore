@@ -17,5 +17,8 @@ wandb/
 *.safetensors
 *.mp4
 
+# 실행 작업 디렉토리 (생성 영상·중간 로그 — 확정 산출물은 results/로 복사)
+local_runs/
+
 # 분석 캐시
 local_eval/*.npz
