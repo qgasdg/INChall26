@@ -11,7 +11,7 @@ fetch() { # fetch <url> [출력파일]  (출력파일 생략 시 stdout)
     if command -v curl >/dev/null 2>&1; then
         if [ $# -ge 2 ]; then curl -fL --retry 3 -C - -o "$2" "$1"; else curl -LsSf "$1"; fi
     elif command -v wget >/dev/null 2>&1; then
-        if [ $# -ge 2 ]; then wget -c -O "$2" "$1"; else wget -qO- "$1"; fi
+        if [ $# -ge 2 ]; then wget --tries=3 -c -O "$2" "$1"; else wget -qO- "$1"; fi
     else
         echo "curl/wget 둘 다 없음 — 하나 설치 필요" >&2; exit 1
     fi
