@@ -1,0 +1,42 @@
+[
+ {
+  "seed": 0,
+  "gen_total_s": 284.6,
+  "per_sample_s": 9.49
+ },
+ {
+  "seed": 1,
+  "gen_total_s": 305.3,
+  "per_sample_s": 10.18
+ },
+ {
+  "seed": 2,
+  "gen_total_s": 247.7,
+  "per_sample_s": 8.26
+ },
+ {
+  "seed": 3,
+  "gen_total_s": 245.1,
+  "per_sample_s": 8.17
+ },
+ {
+  "seed": 4,
+  "gen_total_s": 248.1,
+  "per_sample_s": 8.27
+ },
+ {
+  "seed": 5,
+  "gen_total_s": 246.3,
+  "per_sample_s": 8.21
+ },
+ {
+  "seed": 6,
+  "gen_total_s": 248.2,
+  "per_sample_s": 8.27
+ },
+ {
+  "seed": 7,
+  "gen_total_s": 251.3,
+  "per_sample_s": 8.38
+ }
+]
