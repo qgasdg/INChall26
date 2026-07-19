@@ -1,0 +1,42 @@
+{
+ "n_datasets": 128,
+ "n_episodes": 11132,
+ "n_frames": 1025666,
+ "short_episodes_lt16": 34,
+ "short_episode_share_pct": 0.305,
+ "fps_values": {
+  "6": 127,
+  "10": 1
+ },
+ "original_fps_values": {
+  "30": 127,
+  "50": 1
+ },
+ "downsample_stride_values": {
+  "5": 128
+ },
+ "resolutions": {
+  "640x480": 123,
+  "1920x1080": 3,
+  "1280x720": 2
+ },
+ "codecs": {
+  "av1": 81,
+  "h264": 47
+ },
+ "camera_keys": {
+  "observation.images.image": 127,
+  "observation.images.s_left": 1
+ },
+ "multi_camera_datasets": [],
+ "action_dims": {
+  "6": 128
+ },
+ "robot_types": {
+  "so100": 125,
+  "so100-blue": 2,
+  "so100-red": 1
+ },
+ "meta_count_mismatch": [],
+ "datasets_with_action_nan": []
+}
