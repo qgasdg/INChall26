@@ -12,15 +12,16 @@ dependencies = [
     "einops==0.6.0",
     "av==18.0.0",
     "imageio==2.37.3",
-    "numpy==1.26.4",          # 킷 제약 <2
+    "numpy==1.26.4", # 킷 제약 <2
     "pillow==11.3.0",
     "timm==1.0.28",
     "pyyaml==6.0.3",
-    "omegaconf==2.3.1",       # 킷 requirements 누락 버그 — ckpt 로드에 필수 (docs/08)
+    "omegaconf==2.3.1", # 킷 requirements 누락 버그 — ckpt 로드에 필수 (docs/08)
     # EDA·유틸
     "pandas==3.0.3",
     "pyarrow==25.0.0",
     "matplotlib==3.11.1",
     "huggingface-hub==1.24.0",
     "tqdm==4.69.0",
+    "setuptools<81",
 ]
