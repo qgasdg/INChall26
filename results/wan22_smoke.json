@@ -1,0 +1,20 @@
+{
+ "gpu": "Tesla V100-DGXS-32GB",
+ "sm": "sm_70",
+ "gpu_total_gb": 31.73,
+ "bf16_supported_api": true,
+ "bf16_native": false,
+ "matmul_tflops": {
+  "fp16": 83.5,
+  "bf16": 10.0,
+  "fp32": 13.5
+ },
+ "diffusion_params_b": 5.0,
+ "diffusion_fp16_gb": 9.32,
+ "t5_params_b": 5.68,
+ "diffusion_plus_t5_fp16_gb": 19.9,
+ "peak_gb": 19.9,
+ "headroom_gb": 11.83,
+ "fits": true,
+ "verdict": "적재 가능 — 추론 여유도 충분"
+}
