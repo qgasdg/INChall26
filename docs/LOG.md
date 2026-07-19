@@ -1,6 +1,7 @@
 # 작업 로그
 
 ## 2026-07-19
+- **[Y 에이전트] E1 스윕+재앵커 3차 시도 — P0 착수 전 중단 (원격 환경 egress 정책 차단)**: 이번 실행 환경(Claude Code 원격 컨테이너)의 아웃바운드 프록시가 `cfiles.dacon.co.kr`(open.zip CDN)·`api.kaggle.com`·`www.kaggle.com`·`huggingface.co` 전부에 CONNECT 403(정책 거부). GitHub·PyPI만 허용. → 데이터 반입도 Kaggle 커널 조작도 불가라 P0~P3 전 단계 실행 불가. 프록시 지침·docs/16 손절 규칙에 따라 우회 없이 중단·보고. **재시도 조건: 세션 환경의 네트워크 정책에 위 4개 호스트 허용(또는 정책 "무제한") 후 재실행** — Kaggle 자산·쿼터(29.88h)는 소모되지 않았고 repo도 무변경이라 다음 에이전트는 그대로 P0부터 시작하면 됨. 부수 발견: docs/16의 "kaggle CLI는 uv.lock에 포함" 표기는 사실과 다름(uv.lock에 kaggle 없음 — 별도 설치 필요, 다음 실행 시 반영할 것).
 - **[Y 기안] 룰북 §8 개정: 착수 선언 = 슬랙 전환 (T 승인 대기)** → BOARD "진행 중" 폐지, BOARD는 대기·완료 기록용. [슬랙 공지](https://inchall26.slack.com/archives/C0BJ7PWLLN6/p1784393370046249) 발송 (소통 채널 건과 함께 승인 요청).
 - **[Y 착수] E1 추론 스윕** (steps 50/30/20/12 + guidance_rescale, 제출 없음, T4 ~5h) + **홀드아웃 v2 재앵커 겸행** — 착수 선언은 새 방식(슬랙)으로 첫 적용.
 
