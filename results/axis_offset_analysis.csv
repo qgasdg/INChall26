@@ -1,0 +1,7 @@
+axis,eval_median,eval_std,train_median_of_means,offset_eval_minus_train,train_between_dataset_std,n_datasets_covering_eval_median,n_datasets_total,coverage_pct,pose_dist_median,delta_dist_median,pose_to_delta_ratio
+wrist_roll,81.56,40.38,-5.89,87.45,47.78,28,128,21.9,71.41,0.6444,110.8
+shoulder_lift,102.57,74.75,124.62,-22.06,21.93,125,128,97.7,40.19,0.9415,42.7
+elbow_flex,117.38,63.78,113.75,3.63,25.79,124,128,96.9,32.25,0.9747,33.1
+shoulder_pan,1.76,29.41,1.19,0.57,13.84,124,128,96.9,12.02,0.6879,17.5
+wrist_flex,66.8,15.66,64.22,2.58,19.91,124,128,96.9,8.59,0.7254,11.8
+gripper,6.5,9.46,11.06,-4.56,8.11,116,128,90.6,6.67,0.7453,8.9
