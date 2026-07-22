@@ -1,0 +1,78 @@
+{
+  "eval_anchor": {
+    "setup_A_pitch_median": 11.7,
+    "setup_A_band_p5_p95": [
+      6.0,
+      17.3
+    ],
+    "setup_B_pitch_median": 33.3,
+    "setup_B_band_p5_p95": [
+      25.4,
+      39.9
+    ],
+    "threshold": 22.5
+  },
+  "train_pitch_distribution": {
+    "p10": 7.4,
+    "p25": 11.5,
+    "median": 21.4,
+    "p75": 48.4,
+    "p90": 63.4
+  },
+  "totals": {
+    "datasets": 128,
+    "episodes": 11132,
+    "frames": 1025666
+  },
+  "share_by_band": {
+    "A류(<=17도)": {
+      "datasets": 53,
+      "datasets_pct": 41.4,
+      "episodes_pct": 45.8,
+      "frames_pct": 42.6
+    },
+    "A와B사이": {
+      "datasets": 22,
+      "datasets_pct": 17.2,
+      "episodes_pct": 10.3,
+      "frames_pct": 11.8
+    },
+    "B류(25~40도)": {
+      "datasets": 18,
+      "datasets_pct": 14.1,
+      "episodes_pct": 18.6,
+      "frames_pct": 18.9
+    },
+    "B보다더비스듬(>40도)": {
+      "datasets": 35,
+      "datasets_pct": 27.3,
+      "episodes_pct": 25.2,
+      "frames_pct": 26.7
+    }
+  },
+  "share_auto_low_angle": {
+    "datasets": 59,
+    "datasets_pct": 46.1,
+    "episodes_pct": 48.1,
+    "frames_pct": 50.7
+  },
+  "eye_vs_auto": {
+    "labelled": 117,
+    "excluded_ambiguous": 11,
+    "accuracy": 0.769,
+    "eye_low_auto_low": 51,
+    "eye_top_auto_top": 39,
+    "eye_top_auto_low": 5,
+    "eye_low_auto_top": 22
+  },
+  "eye_label_counts": {
+    "L": 73,
+    "T": 44,
+    "?": 11
+  },
+  "fov_sensitivity_median_pitch": {
+    "fov50": 25.1,
+    "fov60": 21.4,
+    "fov70": 16.8
+  }
+}
