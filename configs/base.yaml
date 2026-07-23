@@ -1,0 +1,67 @@
+# 공통 기본 config (base < exp < server < CLI override).
+# 실험 config(exp/)는 이 위에 "바뀌는 값만" 덮어씀(단일 변수 원칙). 하드웨어 종속값은 server/가 담당.
+# 주력 = IRASim 파인튜닝(이식 원본: ../IRASim-SO100-Fine-tuning/impl/w2/).
+
+task:
+  score_weights: {dino: 0.3, video: 0.3, action: 0.4}   # 낮을수록 좋음
+  frames: 16              # 조건 프레임(t=0) 포함 — 실질 미래 15프레임
+  gen_hw: [320, 512]      # native 생성 해상도(킷 letterbox 규격)
+
+data:
+  align_mode: shifted     # frames1..15 ← act0..14 (action[t]≈state[t+1] 근거). 대조군: same_index
+  stride: 4               # 윈도우 stride
+  min_frames: 16          # <16프레임 에피소드(34개) 제외
+  sampler: sqrt_balanced  # 데이터셋 크기 편향 완화
+  action_dim: 6
+  augment: {flip: false, hue: false, brightness: 0.1, contrast: 0.1}   # flip/hue 금지(불변)
+  pre_encode: true        # IRASim 정본 = SDXL VAE latent 사전인코딩 캐시 슬라이스(VAE 병목 제거). 캐시 경로는 server/paths
+
+model:
+  backbone: irasim        # 벤더 third_party/irasim DiT(프레임 비디오 디퓨전). action-conditioned, 텍스트 없음
+  vae: stabilityai/stable-diffusion-xl-base-1.0   # SDXL VAE. 320×512 → latent 4×40×64 (÷8)
+  finetune: {mode: partial}   # full | partial | lora — IRASim FT 범위
+  lora: {r: 64, alpha: 64, dropout: 0.0}          # finetune.mode=lora 일 때만 사용
+  action_adapter: {type: embedder_swap, zero_init: true}  # 원본 EE(7) 임베더 → SO100(6) 교체, 출력층 zero-init
+  mask_frame_num: 1       # 조건 프레임 수(인페인팅 고정 — frame0 = 입력 이미지)
+  resolution_mode: canvas_aligned   # canvas_aligned | native_restore
+
+train:
+  objective: diffusion    # IRASim 벤더 diffusion.training_losses (Wan의 flow matching 아님)
+  precision: bf16
+  grad_checkpoint: true
+  optimizer: {name: adamw, betas: [0.9, 0.95], weight_decay: 0.0}
+  lr: 1.0e-4
+  lr_schedule: {warmup_steps: 100, type: cosine, min_lr: 2.5e-6}
+  max_steps: null         # server의 시간 예산(4일)으로 환산 — exp/server에서 지정
+  eval_every: 2000        # 홀드아웃 DV_w + eval Action 실측 → ckpt 선택 기준(train loss 아님)
+  ckpt_every: 2000
+  keep_last: 2            # 공유계정 쿼터: 최근 N + best 1
+  post_frame_weight: 1.0  # >1이면 후반프레임 가중(exp06)
+
+infer:
+  eta: 0.0               # 결정론(불변)
+  steps: 20
+  method: PNDM           # PNDM | DDIM(eta) | DPM++ | SDE-DPM++ (irasim_runtime.build_sampler)
+  best_of_n: 1           # 동종 변형끼리만(이종 best-of-2 무익)
+  video_codec: {name: h264, crf: 10}   # 저압축 — 인코딩이 D+V에 ~0.002 영향
+
+eval:
+  holdout: local_eval/holdout.json
+  action_source: eval_measured   # Action 정본 = eval 216 실측. 홀드아웃 Action은 상대 참고만
+
+# 큐레이션·정규화 — 출처: docs/17_E2_학습전략_초안 (제안, T 승인 대기 · 실효값 검증 후 확정)
+curriculum:
+  hard_exclude:
+    min_frames_lt: 16                        # <16프레임 에피소드 34개(창 못 만듦)
+    datasets: ["dragon-95/so100_sorting"]    # 유일한 10fps 이상치(나머지 6fps → 시간 규모 혼입)
+    holdout_v2_unseen: ["aractingi/push_cube_offline_data", "frk2/so100large",
+                        "CSCSXX/pick_place_cube_1.18", "ZGGZZG/so100_drop0"]  # E-final에서만 복귀
+  weight_down: {"Chojins/*": 0.33}           # 어안+거울(겉모습 최하위권)이나 동작 일부 유용 → 완전제외 대신 축소
+  setup_quota: {A: 0.71, B: 0.29}            # eval 셋업 비율. 최대 실점 = 셋업 B 큰관절(elbow_flex·shoulder_lift)
+
+normalization:
+  action: zscore                             # 전역 z-score. ★킷 정합 코드경로 검증 필수(load_action_stats→normalize_actions)
+  per_dataset_center: ["wrist_roll"]         # 데이터셋별 중심정렬(상대 회전 학습), 추론 시 eval 중앙값 복원
+  # 주의: 최대 실점 축은 shoulder_pan. wrist_roll은 z-정규화로 싸게 매겨져 6.8%(안정성 목적으로만)
+
+seed: 0

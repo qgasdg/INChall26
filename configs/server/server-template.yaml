@@ -1,0 +1,29 @@
+# 서버(하드웨어) 종속값만 (docs/07 §1.1). 실험 config와 분리 — 같은 exp를 서버 바꿔 재현 가능.
+# 파일명 규칙: server/<이름>.yaml  예) server/a6000.yaml, server/runpod_4090.yaml
+#
+# 시간 예산은 최종 기준 카드(RTX PRO 6000 96GB·4일)로 환산 기록할 것.
+
+server:
+  name: template          # local_lb.csv의 server 컬럼에 기록(결과 정합)
+  gpu: "RTX PRO 6000 96GB" # 최종 재현 기준 카드
+  vram_gb: 96
+
+runtime:
+  device: cuda
+  precision: bf16         # V100 등 no-bf16이면 fp16
+  attention: flash        # 미탐지 시 math 강등
+  matmul_tf32: true
+
+train:
+  batch_size: 4           # VRAM에 맞춰 조정(96GB 기준)
+  grad_accum: 1
+  num_workers: 8
+  max_steps: 40000        # 4일 벽시계 예산으로 환산해 지정
+  max_wall_hours: 96      # 4일 하드 리밋
+
+paths:
+  data_root: open/        # open.zip 복원 위치
+  latent_cache: latent_cache/
+  ckpt_dir: ckpts/          # 체크포인트 (.gitignore 대상)
+  out_dir: local_runs/      # 생성 영상·중간물(작업 디렉토리 — 확정물만 results/로 복사)
+  log_dir: local_runs/      # 학습 로그·wandb
