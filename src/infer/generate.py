@@ -25,7 +25,12 @@ def _g(cfg: dict, path: str, default=None):
 
 
 def _build_conditions(cfg: dict, n: int, logger=None) -> list[dict]:
-    """holdout.json unseen_scene → {id, cond_gen(gh,gw,3), actions15(15,6)}. CPU만(디코드+정렬)."""
+    """홀드아웃 → {id, cond_gen(gh,gw,3), actions15(15,6)}. CPU만(디코드+정렬).
+
+    스키마 자동 감지: v2(samples[]+tier+start+sample_id, ★start≠0 윈도우) / v1(unseen_scene[], start=0).
+    파일명 규약: v2=sample_id(score_v2.py 정합), v1=<ds'/'→'__'>__ep<ep>(score.py 정합).
+    v2 tier 선택 = eval.tiers(unseen[기본]|indomain|all). n>0 이면 앞에서 n개만(스모크용).
+    """
     import numpy as np
 
     from local_eval import episode_io
@@ -33,22 +38,34 @@ def _build_conditions(cfg: dict, n: int, logger=None) -> list[dict]:
     from src.models.action_adapter import adapt_action_seq
 
     holdout = json.loads((_ROOT / "local_eval" / (_g(cfg, "eval.holdout", "local_eval/holdout.json").split("/")[-1])).read_text(encoding="utf-8"))
-    unseen = holdout.get("unseen_scene", [])[:n]
+    if "samples" in holdout:                                    # v2: tier 필터 + start 윈도우 + sample_id
+        tset = {"unseen": ["unseen_cousin", "unseen_general"], "indomain": ["indomain"],
+                "all": ["indomain", "unseen_cousin", "unseen_general"]}
+        tiers = tset.get(_g(cfg, "eval.tiers", "unseen"), ["unseen_cousin", "unseen_general"])
+        picked = [s for s in holdout["samples"] if s["tier"] in tiers]
+        items = [(s["dataset"], int(s["episode_index"]), int(s.get("start", 0)), s["sample_id"]) for s in picked]
+        tag = "v2:" + str(_g(cfg, "eval.tiers", "unseen"))
+    else:                                                       # v1: unseen_scene, start=0
+        items = [(s["dataset"], int(s["episode_index"]), 0,
+                  f'{s["dataset"].replace("/", "__")}__ep{int(s["episode_index"])}')
+                 for s in holdout.get("unseen_scene", [])]
+        tag = "v1:unseen_scene"
+    if n:
+        items = items[:n]
+
     mean, std = T.load_action_stats()
     mode = _g(cfg, "model.resolution_mode", T.RES_A)
     align = _g(cfg, "data.align_mode", "shifted")
     seq = int(_g(cfg, "task.frames", 16))
     out = []
-    for s in unseen:
-        ds_id, ep = s["dataset"], int(s["episode_index"])
-        f0 = episode_io.read_frames(ds_id, ep, 0, 1)                                    # (1,H,W,3) uint8
-        actions = T.normalize_action(episode_io.read_actions(ds_id, ep, 0, seq), mean, std)  # (16,6) z
+    for ds_id, ep, st, sid in items:
+        f0 = episode_io.read_frames(ds_id, ep, st, 1)                                  # (1,H,W,3) uint8
+        actions = T.normalize_action(episode_io.read_actions(ds_id, ep, st, seq), mean, std)  # (16,6) z
         cond_gen = T.final_to_gen_target(f0, mode)[0]                                   # (gh,gw,3) uint8
-        out.append({"id": f"{ds_id.replace('/', '__')}__ep{ep}",   # score.py sample_key 규약 정합
-                    "cond_gen": cond_gen,
+        out.append({"id": sid, "cond_gen": cond_gen,                                    # v2=sample_id / v1=ds__ep
                     "actions15": np.ascontiguousarray(adapt_action_seq(actions, seq, align))})
     if logger:
-        logger.info("생성 조건 %d개(unseen_scene)", len(out))
+        logger.info("생성 조건 %d개 (%s)", len(out), tag)
     return out
 
 
