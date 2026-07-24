@@ -69,19 +69,31 @@ def generate(cfg: dict, ckpt: str, out: str, device: str = "cuda", logger=None) 
         logger and logger.warning("생성 조건 없음(holdout unseen_scene 비어있음)"); return
 
     gh, gw = _g(cfg, "task.gen_hw", [320, 512])
-    cond = torch.stack([torch.from_numpy(s["cond_gen"]).float().div(127.5).sub(1.0).permute(2, 0, 1)
-                        for s in samples]).unsqueeze(1)                       # (b,1,3,gh,gw)
-    mask_x = encode_video(rt, cond)                                           # (b,1,4,h,w)
-    actions15 = torch.stack([torch.from_numpy(s["actions15"]).float() for s in samples])  # (b,15,6)
-
-    pred = rt_generate(rt, mask_x, actions15,
-                       steps=int(_g(cfg, "infer.steps", 20)), eta=float(_g(cfg, "infer.eta", 0.0)),
-                       method=_g(cfg, "infer.method", "PNDM"), seed=int(_g(cfg, "seed", 0)),
-                       gen_hw=(int(gh), int(gw)))                             # (b,16,gh,gw,3) uint8
-
     outp = Path(out); outp.mkdir(parents=True, exist_ok=True)
     fps = int(_g(cfg, "infer.fps", 8))
-    for i, s in enumerate(samples):
-        imageio.mimwrite(outp / f"{s['id']}.mp4", list(pred[i]), fps=fps, codec="libx264",
-                         output_params=["-crf", str(int(_g(cfg, "infer.video_codec.crf", 10)))])
-    logger and logger.info("생성 %d개 → %s (gen-space %dx%d, η=0)", len(samples), outp, gh, gw)
+    crf = str(int(_g(cfg, "infer.video_codec.crf", 10)))
+    chunk = int(_g(cfg, "infer.gen_chunk", 8) or 8)   # 청크 단위 생성→즉시 저장(메모리 상한·재개). rt_generate 내부는 gen_batch로 또 분할
+
+    pending = [s for s in samples if not (outp / f"{s['id']}.mp4").exists()]   # 이미 만든 mp4는 스킵(중단 시 이어서)
+    if logger:
+        logger.info("생성 대상 %d개(전체 %d, 기존 %d 스킵), chunk=%d",
+                    len(pending), len(samples), len(samples) - len(pending), chunk)
+
+    done = 0
+    for c0 in range(0, len(pending), chunk):
+        grp = pending[c0:c0 + chunk]
+        cond = torch.stack([torch.from_numpy(s["cond_gen"]).float().div(127.5).sub(1.0).permute(2, 0, 1)
+                            for s in grp]).unsqueeze(1)                       # (g,1,3,gh,gw)
+        mask_x = encode_video(rt, cond)                                       # (g,1,4,h,w)
+        actions15 = torch.stack([torch.from_numpy(s["actions15"]).float() for s in grp])  # (g,15,6)
+        pred = rt_generate(rt, mask_x, actions15,
+                           steps=int(_g(cfg, "infer.steps", 20)), eta=float(_g(cfg, "infer.eta", 0.0)),
+                           method=_g(cfg, "infer.method", "PNDM"), seed=int(_g(cfg, "seed", 0)),
+                           gen_hw=(int(gh), int(gw)))                         # (g,16,gh,gw,3) uint8
+        for i, s in enumerate(grp):
+            imageio.mimwrite(outp / f"{s['id']}.mp4", list(pred[i]), fps=fps, codec="libx264",
+                             output_params=["-crf", crf])
+        done += len(grp)
+        logger and logger.info("생성 진행 %d/%d", done, len(pending))
+        del cond, mask_x, actions15, pred
+    logger and logger.info("생성 완료 %d개(신규) → %s (gen-space %dx%d, η=0)", done, outp, gh, gw)
