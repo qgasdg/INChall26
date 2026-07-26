@@ -1,0 +1,34 @@
+# IRASim 레이어 전용 의존성 — src/models · src/train · src/infer + third_party/irasim.
+#
+# ★별도 venv 권장 (INChall26 기본 .venv[킷 정합]와 한 env 공존 불가):
+#   - huggingface_hub: 킷 .venv=1.x  vs  IRASim(diffusers 0.24)=0.20.3  → 충돌
+#   - diffusers 0.24.0 계열은 구 hf_hub API 요구 (docs/08 η/omegaconf 격리와 같은 맥락)
+#   impl/w2 도 동일 이유로 별도 env 사용(requirements-w2.txt).
+#
+# GPU 서버 설치(예):
+#   uv venv .venv-irasim && source .venv-irasim/bin/activate
+#   # torch 는 GPU 아키텍처에 맞춰 먼저 설치:
+#   #   V100/A100/A40(cu118): pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+#   pip install -r requirements-irasim.txt
+#
+# 실행은 GPU 필요(맥 차단). 첫 실행 시 반입: SDXL VAE(~335MB, HF 자동) · IRASim 슬림 ckpt(~2.7GB).
+# 검증 상태(이 env 없이 확인됨): 벤더 config 조립·데이터 계층·임베더 교체·파일명 정합 전부 통과.
+#   이 env 설치 후 남는 확인: get_models 구성 → build() → 스텝/생성/채점 (GPU).
+
+diffusers[torch]==0.24.0
+huggingface_hub==0.20.3
+transformers==4.36.2
+tokenizers==0.15.2
+timm>=0.9
+einops>=0.6
+einops_exts
+rotary_embedding_torch
+omegaconf>=2.3
+numpy<2
+pillow>=9.5
+av>=10
+imageio-ffmpeg>=0.4.9
+opencv-python>=4.8
+scikit-image>=0.21
+tqdm>=4.60
+matplotlib>=3.7
