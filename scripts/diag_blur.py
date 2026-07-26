@@ -83,7 +83,7 @@ def check_vae(n: int) -> dict:
 
     rows = []
     for sid, f0 in _holdout_frames(n):
-        gen = T.final_to_gen_target(f0, T.RES_A)[0]        # (320,512,3) 킷 레터박스 규격
+        gen = T.final_to_gen_target(f0[None], T.RES_A)[0]  # (320,512,3) 킷 레터박스 규격(배치 차원 필요)
         for tag, src in (("gen_320x512", gen), ("native_%dx%d" % f0.shape[:2], f0)):
             rec = roundtrip(src)
             s0, s1 = _lap_var(_gray(src)), _lap_var(_gray(rec))
