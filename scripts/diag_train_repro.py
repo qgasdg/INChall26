@@ -13,6 +13,11 @@
 학습 풀은 `src.data.dataset.build_window_index(cfg)` 를 그대로 써서 뽑는다 — 학습 때와 **동일한
 제외 규칙**(홀드아웃·hard_exclude)이 적용되므로 "정말 학습에 쓴 클립"이 보장된다.
 
+**덤으로 붙은 천장 검사**(`ceiling_check`): 유지율은 `마지막÷첫`이라, 모델이 입력과 무관하게
+늘 비슷한 선명도만 뱉으면 **또렷한 장면일수록 유지율이 낮게** 나온다 — 모델은 똑같이 행동하는데도.
+입력 선명도 대비 **출력 절대 선명도**의 로그-로그 기울기가 0에 가까우면 천장(모델 한계)이고,
+그동안 재온 유지율 격차의 상당 부분이 장면 선택이 만든 착시라는 뜻이다.
+
 지표 3종:
   - 유지율   = 라플라시안분산(마지막 프레임) / 라플라시안분산(첫=조건 프레임). 100%면 안 뭉개짐.
   - GT 유지율 = 실제 정답 영상의 같은 값. **천장** 역할(실제 영상도 100%는 아님).
@@ -97,13 +102,27 @@ def train_samples(cfg: dict, n: int) -> list[dict]:
 
 
 def unseen_samples(cfg: dict, n: int) -> list[dict]:
-    """대조군 — 홀드아웃 unseen 앞 n개(모델이 한 번도 못 본 클립)."""
+    """대조군 — 홀드아웃 unseen에서 **데이터셋 겹치지 않게** n개.
+
+    ★앞에서 n개를 그냥 자르면 전부 한 데이터셋(aractingi/push_cube)으로 쏠린다 —
+      학습 쪽은 6개 서로 다른 데이터셋이라 두 묶음이 비교 불가능해진다. 데이터셋을
+      돌아가며(round-robin) 뽑아 구성 편향을 없앤다.
+    """
     from local_eval import episode_io
 
     seq = int(cfg.get("task", {}).get("frames", 16))
     hp = ROOT / "local_eval" / "holdout_v2.json"
-    picked = [s for s in json.loads(hp.read_text(encoding="utf-8"))["samples"]
-              if str(s.get("tier", "")).startswith("unseen")][:n]
+    pool = [s for s in json.loads(hp.read_text(encoding="utf-8"))["samples"]
+            if str(s.get("tier", "")).startswith("unseen")]
+    by_ds: dict[str, list] = {}
+    for s in pool:
+        by_ds.setdefault(s["dataset"], []).append(s)
+    picked, rnd = [], 0
+    while len(picked) < n and any(len(v) > rnd for v in by_ds.values()):
+        for ds in sorted(by_ds):
+            if len(by_ds[ds]) > rnd and len(picked) < n:
+                picked.append(by_ds[ds][rnd])
+        rnd += 1
     out = []
     for s in picked:
         ds, ep, st = s["dataset"], int(s["episode_index"]), int(s.get("start", 0))
@@ -130,20 +149,49 @@ def run_group(rt, name: str, samples: list[dict], steps: int) -> dict:
                                       seed=0, gen_hw=GEN_HW)[0])                            # (16,H,W,3)
         g0, g1 = _lap_var(_gray(pred[0])), _lap_var(_gray(pred[-1]))
         t0, t1 = _lap_var(_gray(gt[0])), _lap_var(_gray(gt[-1]))
-        r = {"sample": s["id"], "keep_pct": 100.0 * g1 / max(g0, 1e-9),
-             "gt_keep_pct": 100.0 * t1 / max(t0, 1e-9),
+        r = {"sample": s["id"], "group": name,
+             "sharp_in": t0, "sharp_out_last": g1, "sharp_out_first": g0, "sharp_gt_last": t1,
+             "keep_pct": 100.0 * g1 / max(g0, 1e-9), "gt_keep_pct": 100.0 * t1 / max(t0, 1e-9),
              "psnr_last": _psnr(pred[-1], gt[-1]), "psnr_first": _psnr(pred[0], gt[0])}
         rows.append(r)
-        print("  %-52s 유지 %5.1f%% (정답 %5.1f%%)  PSNR 마지막 %4.1f dB"
-              % (s["id"][-52:], r["keep_pct"], r["gt_keep_pct"], r["psnr_last"]), flush=True)
+        print("  %-44s 입력 %6.0f → 출력 %6.0f  유지 %5.1f%%  PSNR %4.1f dB"
+              % (s["id"][-44:], t0, g1, r["keep_pct"], r["psnr_last"]), flush=True)
         del mask_x, pred
         torch.cuda.empty_cache()
 
     agg = {k: float(np.mean([r[k] for r in rows]))
-           for k in ("keep_pct", "gt_keep_pct", "psnr_last", "psnr_first")}
-    print("  → 평균 유지 %.1f%% (정답 %.1f%%) · PSNR 마지막 %.1f dB"
-          % (agg["keep_pct"], agg["gt_keep_pct"], agg["psnr_last"]), flush=True)
+           for k in ("sharp_in", "sharp_out_last", "keep_pct", "gt_keep_pct", "psnr_last", "psnr_first")}
+    print("  → 평균 입력 %.0f → 출력 %.0f · 유지 %.1f%% · PSNR %.1f dB"
+          % (agg["sharp_in"], agg["sharp_out_last"], agg["keep_pct"], agg["psnr_last"]), flush=True)
     return {"rows": rows, "agg": agg}
+
+
+def ceiling_check(rows: list[dict]) -> dict:
+    """입력 선명도가 올라갈 때 **출력 절대 선명도**가 따라 오르는지 — 천장 유무 판정.
+
+    유지율(마지막÷첫)은 모델이 입력과 무관하게 늘 같은 선명도를 뱉어도 입력이 또렷할수록
+    낮게 나온다. 그래서 유지율만 보면 "이 장면이 더 뭉개진다"는 착시가 생긴다.
+    로그-로그 기울기로 가른다: 1이면 입력만큼 따라 오름, 0이면 완전한 천장.
+    """
+    xi = np.log(np.array([max(r["sharp_in"], 1e-9) for r in rows]))
+    yo = np.log(np.array([max(r["sharp_out_last"], 1e-9) for r in rows]))
+    slope, _ = np.polyfit(xi, yo, 1) if len(rows) >= 3 else (float("nan"), 0.0)
+    corr = float(np.corrcoef(xi, yo)[0, 1]) if len(rows) >= 3 else float("nan")
+    keep = np.array([r["keep_pct"] for r in rows])
+    corr_keep = float(np.corrcoef(xi, keep)[0, 1]) if len(rows) >= 3 else float("nan")
+    out = {"n": len(rows), "loglog_slope": float(slope), "corr_in_out": corr,
+           "corr_in_keep": corr_keep,
+           "out_sharp_cv": float(np.std([r["sharp_out_last"] for r in rows])
+                                 / max(np.mean([r["sharp_out_last"] for r in rows]), 1e-9))}
+    print("\n=== 선명도 천장 검사 (전체 %d개) ===" % out["n"])
+    print("  입력↑ 대비 출력↑ 기울기 %.2f (1=입력 따라감, 0=천장) · 상관 %.2f" % (slope, corr))
+    print("  입력 선명도 ↔ 유지율 상관 %.2f (음수면 '또렷한 장면일수록 유지율 낮음' = 착시 성분)"
+          % corr_keep)
+    print("  출력 선명도 변동계수 %.2f (작을수록 입력 무관하게 일정 = 천장)" % out["out_sharp_cv"])
+    print("  %s" % ("→ 천장 있음. 유지율 차이의 상당 부분은 입력 선명도 차이가 만든 착시"
+                    if slope < 0.35 else
+                    "→ 천장 아님. 출력이 입력을 따라감 — 유지율 차이는 실제 차이"))
+    return out
 
 
 def main() -> None:
@@ -169,18 +217,28 @@ def main() -> None:
            "train": run_group(rt, "학습에 쓴 클립", tr, args.steps),
            "unseen": run_group(rt, "처음 보는 클립(대조군)", un, args.steps)}
 
+    res["ceiling"] = ceiling_check(res["train"]["rows"] + res["unseen"]["rows"])
+
     d = res["train"]["agg"]["keep_pct"] - res["unseen"]["agg"]["keep_pct"]
     dp = res["train"]["agg"]["psnr_last"] - res["unseen"]["agg"]["psnr_last"]
     res["delta_keep_pp"], res["delta_psnr_db"] = d, dp
-    print("\n=== 결론 ===")
+    print("\n=== 학습 vs 미학습 ===")
     print("  유지율   학습 %.1f%%  vs  미학습 %.1f%%  → 차이 %+.1f%%p" %
           (res["train"]["agg"]["keep_pct"], res["unseen"]["agg"]["keep_pct"], d))
     print("  PSNR     학습 %.1f dB vs  미학습 %.1f dB → 차이 %+.1f dB" %
           (res["train"]["agg"]["psnr_last"], res["unseen"]["agg"]["psnr_last"], dp))
-    print("  정답(천장) 유지율 학습 %.1f%% / 미학습 %.1f%%" %
-          (res["train"]["agg"]["gt_keep_pct"], res["unseen"]["agg"]["gt_keep_pct"]))
-    print("  %s" % ("→ 학습한 건 재현함. 원인은 **학습량·일반화** (EMA·추가 학습이 유효)" if d > 15 or dp > 2
-                    else "→ 학습한 클립조차 못 맞춤. 원인은 **모델·설정 한계** (추가 학습 무익, 교체 검토)"))
+    print("  입력 선명도 학습 %.0f / 미학습 %.0f  (크게 다르면 아래 판정은 무의미 — 장면 난이도 교란)" %
+          (res["train"]["agg"]["sharp_in"], res["unseen"]["agg"]["sharp_in"]))
+    if "bridge_frame_ada" in str(args.ckpt):
+        print("  ★이 ckpt는 IRASim 사전학습 원본 — 우리 학습 풀을 본 적이 없다."
+              "  '학습 클립'도 미학습이므로 이 비교는 **장면 난이도 대조군**으로만 읽을 것")
+    elif abs(res["train"]["agg"]["sharp_in"] - res["unseen"]["agg"]["sharp_in"]) > \
+            0.4 * res["unseen"]["agg"]["sharp_in"]:
+        print("  → 두 묶음의 입력 선명도가 40% 넘게 달라 판정 보류(장면 난이도 통제 실패)")
+    else:
+        print("  %s" % ("→ 학습한 건 재현함. 원인은 **학습량·일반화** (EMA·추가 학습이 유효)"
+                        if d > 15 or dp > 2 else
+                        "→ 학습한 클립조차 못 맞춤. 원인은 **모델·설정 한계** (추가 학습 무익, 교체 검토)"))
 
     (ROOT / "results").mkdir(exist_ok=True)
     out = ROOT / "results" / ("diag_train_repro%s.json" % (("_" + args.tag) if args.tag else ""))
