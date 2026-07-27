@@ -61,21 +61,32 @@ def _psnr(a: np.ndarray, b: np.ndarray) -> float:
     return 99.0 if mse <= 1e-9 else float(10 * np.log10(255.0 ** 2 / mse))
 
 
-def _pack(sid: str, frames: np.ndarray, actions_deg: np.ndarray, cfg: dict) -> dict:
-    """원본 프레임·액션 → 생성 규격(320×512 레터박스 GT 16장 + z-score 액션 15스텝)."""
+def _pack(sid: str, frames: np.ndarray, actions_deg: np.ndarray, cfg: dict,
+          action_mode: str = "norm") -> dict:
+    """원본 프레임·액션 → 생성 규격(320×512 레터박스 GT 16장 + 액션 15스텝).
+
+    action_mode — 액션을 어떤 형태로 넣을지. 학습 때와 다른 형태를 넣으면 모델이 헛것을 낸다.
+      norm = z-score 정규화(우리 기본) · raw = 정규화 없이 원값(도) · zero = 전부 0
+      zero 로도 결과가 잡음이면 원인은 액션 경로가 아니다.
+    """
     from src.data import transforms as T
     from src.models.action_adapter import adapt_action_seq
 
     seq = int(cfg.get("task", {}).get("frames", 16))
     align = cfg.get("data", {}).get("align_mode", "shifted")
-    mean, std = T.load_action_stats()
     gt = T.final_to_gen_target(frames, T.RES_A)                       # (16,320,512,3) uint8
-    acts = T.normalize_action(actions_deg, mean, std)
-    return {"id": sid, "gt": gt,
-            "actions15": np.ascontiguousarray(adapt_action_seq(acts, seq, align))}
+    if action_mode == "raw":
+        acts = actions_deg.astype(np.float32)
+    else:
+        mean, std = T.load_action_stats()
+        acts = T.normalize_action(actions_deg, mean, std)
+    a15 = np.ascontiguousarray(adapt_action_seq(acts, seq, align))
+    if action_mode == "zero":
+        a15 = np.zeros_like(a15)
+    return {"id": sid, "gt": gt, "actions15": a15}
 
 
-def train_samples(cfg: dict, n: int) -> list[dict]:
+def train_samples(cfg: dict, n: int, action_mode: str = "norm") -> list[dict]:
     """학습 풀(build_window_index)에서 데이터셋이 겹치지 않게 n개 — 균등 간격 결정론 선택."""
     from local_eval import episode_io
 
@@ -97,11 +108,11 @@ def train_samples(cfg: dict, n: int) -> list[dict]:
     for c in picked:
         sid = "train__%s__ep%06d__t%04d" % (c.ds_id.replace("/", "_"), c.episode_index, c.start)
         out.append(_pack(sid, episode_io.read_frames(c.ds_id, c.episode_index, c.start, seq),
-                         episode_io.read_actions(c.ds_id, c.episode_index, c.start, seq), cfg))
+                         episode_io.read_actions(c.ds_id, c.episode_index, c.start, seq), cfg, action_mode))
     return out
 
 
-def unseen_samples(cfg: dict, n: int) -> list[dict]:
+def unseen_samples(cfg: dict, n: int, action_mode: str = "norm") -> list[dict]:
     """대조군 — 홀드아웃 unseen에서 **데이터셋 겹치지 않게** n개.
 
     ★앞에서 n개를 그냥 자르면 전부 한 데이터셋(aractingi/push_cube)으로 쏠린다 —
@@ -127,7 +138,7 @@ def unseen_samples(cfg: dict, n: int) -> list[dict]:
     for s in picked:
         ds, ep, st = s["dataset"], int(s["episode_index"]), int(s.get("start", 0))
         out.append(_pack(s["sample_id"], episode_io.read_frames(ds, ep, st, seq),
-                         episode_io.read_actions(ds, ep, st, seq), cfg))
+                         episode_io.read_actions(ds, ep, st, seq), cfg, action_mode))
     return out
 
 
@@ -200,6 +211,8 @@ def main() -> None:
     ap.add_argument("--ckpt", default="ckpts/bridge_frame_ada_0300000.pt")
     ap.add_argument("--n", type=int, default=6, help="묶음당 샘플 수")
     ap.add_argument("--steps", type=int, default=20)
+    ap.add_argument("--action-mode", choices=("norm", "raw", "zero"), default="norm",
+                    help="액션 넣는 방식 — zero 로도 잡음이면 원인은 액션 경로가 아니다")
     ap.add_argument("--tag", default="", help="결과 파일 접미사 (예: --tag ft14000)")
     args = ap.parse_args()
 
@@ -210,10 +223,11 @@ def main() -> None:
     cfg.setdefault("train", {})["precision"] = "fp16"     # V100
     cfg.setdefault("data", {})["pre_encode"] = False
 
-    tr, un = train_samples(cfg, args.n), unseen_samples(cfg, args.n)
-    print("ckpt: %s" % args.ckpt)
+    tr = train_samples(cfg, args.n, args.action_mode)
+    un = unseen_samples(cfg, args.n, args.action_mode)
+    print("ckpt: %s · 액션 %s" % (args.ckpt, args.action_mode))
     rt = build(cfg, slim_ckpt=args.ckpt, logger=logging.getLogger("rt"))
-    res = {"ckpt": args.ckpt, "steps": args.steps,
+    res = {"ckpt": args.ckpt, "steps": args.steps, "action_mode": args.action_mode,
            "train": run_group(rt, "학습에 쓴 클립", tr, args.steps),
            "unseen": run_group(rt, "처음 보는 클립(대조군)", un, args.steps)}
 
