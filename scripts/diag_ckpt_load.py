@@ -69,9 +69,12 @@ def inspect(path: str, model_keys: set[str]) -> dict:
         "prefix_strip_would_match": stripped,
     }
     if isinstance(raw, dict):
-        for k in ("step", "global_step", "epoch", "iter"):
+        for k in ("step", "global_step", "epoch", "iter", "score", "loss", "best_score"):
             if k in raw and not isinstance(raw[k], dict):
-                out[k] = int(raw[k]) if hasattr(raw[k], "__int__") else str(raw[k])
+                try:
+                    out[k] = float(raw[k])
+                except (TypeError, ValueError):
+                    out[k] = str(raw[k])[:80]
 
     # 매칭된 층 중 큰 것 몇 개의 통계 — 학습된 값인지 난수인지 눈으로 가르기
     stats = []
@@ -86,6 +89,10 @@ def inspect(path: str, model_keys: set[str]) -> dict:
     print("  최상위 칸: %s" % (", ".join(top) if top else "(없음)"))
     print("  state_dict 위치: %s · 텐서 %d개" % (where, len(tensors)))
     print("  키 매칭 %d/%d (%.1f%%)" % (len(matched), len(model_keys), out["match_pct"]))
+    meta = {k: out[k] for k in ("step", "global_step", "epoch", "iter", "score", "loss", "best_score")
+            if k in out}
+    if meta:
+        print("  기록된 값: %s" % ", ".join("%s=%s" % kv for kv in meta.items()))
     if out["match_pct"] < 90:
         print("  ★ 매칭률이 낮다 — 이름이 안 맞아 가중치가 버려졌을 가능성")
         if out["unexpected_in_ckpt"]:
@@ -96,6 +103,56 @@ def inspect(path: str, model_keys: set[str]) -> dict:
             print("  '%s' 접두사를 떼면 %d개 매칭 → 접두사 문제" % (pref, n))
     for s in stats:
         print("    %-40s std %.4f  |최대| %.3f" % (s["key"][:40], s["std"], s["absmax"]))
+    return out
+
+
+def diff_ckpts(a_path: str, b_path: str) -> dict:
+    """두 체크포인트를 층별로 빼서 무엇이 얼마나 변했는지 — 발산·동결·NaN을 한 번에 본다.
+
+    읽는 법:
+      - 안 변한 층이 대부분 → 일부만 학습됨(동결). 변한 층이 문제의 범인.
+      - 변화량이 원래 값보다 훨씬 큼 → 학습 발산(가중치 폭주).
+      - NaN/무한대 존재 → 학습이 중간에 터진 것. 그 체크포인트는 폐기.
+    """
+    import numpy as np
+    import torch
+
+    sa, _ = _unwrap(torch.load(a_path, map_location="cpu", weights_only=False))
+    sb, _ = _unwrap(torch.load(b_path, map_location="cpu", weights_only=False))
+    common = [k for k in sa if k in sb and isinstance(sa[k], torch.Tensor)]
+
+    rows, n_bad = [], 0
+    for k in common:
+        x, y = sa[k].float().numpy(), sb[k].float().numpy()
+        if x.shape != y.shape:
+            continue
+        d = np.abs(x - y)
+        base = float(np.abs(y).mean()) or 1e-9
+        bad = int(np.isnan(x).sum() + np.isinf(x).sum())
+        n_bad += bad
+        rows.append({"key": k, "max_abs_diff": float(d.max()), "mean_abs_diff": float(d.mean()),
+                     "rel": float(d.mean() / base), "absmax_target": float(np.abs(x).max()),
+                     "nan_inf": bad})
+
+    changed = [r for r in rows if r["max_abs_diff"] > 1e-6]
+    frozen = [r for r in rows if r["max_abs_diff"] <= 1e-6]
+    changed.sort(key=lambda r: -r["rel"])
+    out = {"n_layers": len(rows), "n_changed": len(changed), "n_frozen": len(frozen),
+           "n_nan_inf_tensors": sum(1 for r in rows if r["nan_inf"]), "total_nan_inf": n_bad,
+           "max_absmax_target": max((r["absmax_target"] for r in rows), default=0.0),
+           "top_changed": changed[:10], "frozen_examples": [r["key"] for r in frozen[:8]]}
+
+    print("\n=== 층별 비교 (대상 vs 기준) ===")
+    print("  전체 %d층 · 변한 층 %d · 안 변한 층 %d" % (out["n_layers"], out["n_changed"], out["n_frozen"]))
+    if out["total_nan_inf"]:
+        print("  ★ NaN/무한대 %d개 (%d개 층) — 학습이 터졌다. 이 체크포인트는 폐기 대상"
+              % (out["total_nan_inf"], out["n_nan_inf_tensors"]))
+    print("  대상 가중치 절대 최대값 %.1f (기준 대비 지나치게 크면 발산)" % out["max_absmax_target"])
+    print("  변화 큰 층 (상대 변화율 = 평균변화÷원래크기):")
+    for r in changed[:8]:
+        print("    %-44s 상대 %8.2f  최대차 %8.3f" % (r["key"][:44], r["rel"], r["max_abs_diff"]))
+    if frozen:
+        print("  안 변한 층 예: %s" % ", ".join(out["frozen_examples"][:4]))
     return out
 
 
@@ -124,6 +181,7 @@ def main() -> None:
         print("  %s" % ("→ 적재 문제 확정. 기준은 붙는데 대상은 안 붙는다 — 저장 형식이 다르다"
                         if r - t > 10 else
                         "→ 적재는 정상. 생성 이상은 가중치 자체(학습 발산 등)를 의심할 것"))
+        res["diff"] = diff_ckpts(args.ckpt, args.ref)
 
     (ROOT / "results").mkdir(exist_ok=True)
     (ROOT / "results" / "diag_ckpt_load.json").write_text(json.dumps(res, ensure_ascii=False, indent=1))
