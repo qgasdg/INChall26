@@ -60,6 +60,27 @@ def build_vendor_cfg(dataset: str = "bridge", variant: str = "frame_ada", mode: 
 FIXED_EMBED_KEYS = ("pos_embed", "temp_embed")
 
 
+def _unwrap_state_dict(ckpt, logger=None) -> dict:
+    """torch.load 결과에서 실제 가중치 표를 꺼낸다 — 저장한 쪽마다 담는 칸 이름이 다르다.
+
+    ★2026-07-27 사고: 예전엔 `ema` 만 보고 없으면 컨테이너를 통째로 넘겼다. 우리 학습 코드는
+      `model` 칸에 저장하므로(`trainer._state()`), 파인튜닝 ckpt를 주면 **한 개도 안 실린 채**
+      난수 모델로 조용히 생성됐다(적재=0 로그만 남음). 칸 이름을 순서대로 훑고, 못 찾으면
+      최상위가 곧 state_dict 인 경우까지 본다.
+    """
+    import torch
+
+    if not isinstance(ckpt, dict):
+        return ckpt
+    for k in ("ema", "model", "state_dict", "module"):
+        v = ckpt.get(k)
+        if isinstance(v, dict) and v and all(isinstance(t, torch.Tensor) for t in v.values()):
+            if logger:
+                logger.info("ckpt state_dict 위치: '%s' 칸 (최상위 칸: %s)", k, ", ".join(sorted(ckpt)[:6]))
+            return v
+    return ckpt
+
+
 def _robust_load(model, sd: dict, logger=None) -> dict:
     """ckpt↔model state_dict shape diff 전수 비교 후 키별 로드/드롭(strict=False가 조용히 넘기지 않게 로그)."""
     msd = model.state_dict()
@@ -168,12 +189,26 @@ def build(icfg: dict, slim_ckpt: str | Path | None = None, logger=None) -> Runti
                             vae_model_path=icfg.get("model", {}).get("vae"))
 
     model = get_models(vcfg)
+    state_dim = int(icfg.get("data", {}).get("action_dim", 6))
+    zero_init = bool(icfg.get("model", {}).get("action_adapter", {}).get("zero_init", True))
+    swapped = False
     if slim_ckpt:
         ckpt = torch.load(slim_ckpt, map_location="cpu", weights_only=False)   # 신뢰 소스(슬림/공식 ckpt)
-        sd = ckpt["ema"] if isinstance(ckpt, dict) and "ema" in ckpt else ckpt
-        _robust_load(model, sd, logger)
-    swap_action_embedder(model, state_dim=int(icfg.get("data", {}).get("action_dim", 6)),
-                         zero_init=bool(icfg.get("model", {}).get("action_adapter", {}).get("zero_init", True)), logger=logger)
+        sd = _unwrap_state_dict(ckpt, logger)
+        # 우리 파인튜닝 ckpt는 이미 SO100(6-dim) 임베더를 학습해 갖고 있다 → **로드 전에** 교체해야
+        # 모양이 맞아 그 학습분이 실린다. 사전학습 ckpt(7-dim)는 반대로 로드 후 교체해야 한다
+        # (7-dim 은 shape 불일치로 버려지고 6-dim 으로 새로 초기화되는 게 의도된 동작).
+        w = sd.get("embed_state.fc1.weight")
+        swapped = w is not None and tuple(w.shape)[-1] == state_dim
+        if swapped:
+            swap_action_embedder(model, state_dim=state_dim, zero_init=zero_init, logger=logger)
+        stat = _robust_load(model, sd, logger)
+        if stat["loaded"] == 0:
+            raise RuntimeError(
+                "ckpt에서 실린 가중치가 0개다 — 저장 형식을 못 읽었다(난수 모델로 생성될 뻔했다). "
+                "ckpt 최상위 칸: %s" % (sorted(ckpt)[:8] if isinstance(ckpt, dict) else type(ckpt)))
+    if not swapped:
+        swap_action_embedder(model, state_dim=state_dim, zero_init=zero_init, logger=logger)
 
     if icfg.get("train", {}).get("grad_checkpoint", False):
         enable_grad_checkpointing(model, logger)
