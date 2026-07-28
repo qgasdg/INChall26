@@ -116,26 +116,35 @@ def main() -> None:
                  "static": np.repeat(frames[:1], SEQ, axis=0),
                  "reversed": frames[::-1].copy()}[v]
             vid = scorer.to_eval_video(f)[None]                          # (1,16,320,512,3) uint8
-            r[v] = action_mae(scorer.action_pred(vid)[0], target)
+            pred = scorer.action_pred(vid)[0]                            # (16,6) z-score
+            r[v] = action_mae(pred, target)
+            # ★기준 보정본 — 데이터셋마다 관절 0점이 달라(docs/17 wrist_roll 87도) 절대 위치 오차가
+            #   통째로 실린다. 그 상수를 관절별로 빼면 **움직임의 모양**만 남는다.
+            bias = (pred - target).median(dim=0).values                  # (6,) 관절별 상수 오차
+            r[v + "_debias"] = action_mae(pred - bias, target)
         rows.append(r)
-        print("  %-52s 정답 %.4f · 정적 %.4f · 역재생 %.4f"
-              % (r["sample"][-52:], r["gt"], r["static"], r["reversed"]), flush=True)
+        print("  %-44s 정답 %.3f/%.3f · 정적 %.3f/%.3f · 역재생 %.3f/%.3f  (원본/기준보정)"
+              % (r["sample"][-44:], r["gt"], r["gt_debias"], r["static"], r["static_debias"],
+                 r["reversed"], r["reversed_debias"]), flush=True)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-    agg = {v: float(np.mean([r[v] for r in rows])) for v in variants}
-    gap = agg["static"] - agg["gt"]
+    keys = list(variants) + [v + "_debias" for v in variants]
+    agg = {k: float(np.mean([r[k] for r in rows])) for k in keys}
+    gap = agg["static_debias"] - agg["gt_debias"]
     print("\n=== 결과 (낮을수록 좋음) ===")
+    print("  %-24s %-10s %-10s" % ("", "원본", "기준보정"))
     for v, label in (("gt", "정답 영상 (천장)"), ("static", "정적 (첫 프레임 반복)"),
                      ("reversed", "역재생 (움직이나 틀림)")):
-        print("  %-22s %.4f" % (label, agg[v]))
-    print("  정적 − 정답 = %+.4f  (이만큼이 '잘 만들어서 벌 수 있는 최대치')" % gap)
+        print("  %-24s %-10.4f %-10.4f" % (label, agg[v], agg[v + "_debias"]))
+    print("  ※ 원본은 관절 0점 기준 차이가 섞여 데이터셋 간 비교 불가 — **기준보정 열로 판단할 것**")
+    print("  기준보정 기준 정적 − 정답 = %+.4f  (이만큼이 '잘 만들어서 벌 수 있는 최대치')" % gap)
     print("\n  참고 실측: eval216 정적 0.4285 · E3 FT step14000 0.4730")
     print("  %s" % ("→ 여유 있음. 생성 품질을 올리면 A_kit이 내려간다. **학습 계속이 타당**"
                     if gap > 0.10 else
                     "→ ★정답 영상조차 정적과 비슷하다. 이 지표는 움직임을 제대로 못 읽는다 — "
                     "생성을 아무리 잘해도 A_kit으로는 정적을 못 이긴다. 접근 재설계 필요"))
-    if agg["reversed"] < agg["gt"]:
+    if agg["reversed_debias"] < agg["gt_debias"]:
         print("  ★역재생이 정답보다 좋다 — 지표가 움직임의 방향조차 구분 못 한다는 뜻")
 
     res = {"n": len(rows), "tier": args.tier, "agg": agg, "static_minus_gt": gap, "rows": rows}
