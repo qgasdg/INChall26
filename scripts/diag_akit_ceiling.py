@@ -35,10 +35,15 @@ sys.path.insert(0, str(ROOT))
 SEQ = 16
 
 
-def pick_clips(n: int) -> list[dict]:
-    """홀드아웃 unseen에서 데이터셋 겹치지 않게 n개 — 한 데이터셋 쏠림 방지."""
+def pick_clips(n: int, tier: str = "unseen") -> list[dict]:
+    """홀드아웃에서 데이터셋 겹치지 않게 n개 — 한 데이터셋 쏠림 방지.
+
+    tier — 어느 계층에서 뽑을지. **eval과 성격이 비슷한 쪽으로 재야 천장이 의미가 있다.**
+      unseen 클립들은 정적 점수가 0.91인데 실제 eval216은 0.43이라 성격이 많이 다르다
+      → indomain(eval과 같은 계열)으로도 재서 두 값이 같은 이야기를 하는지 확인할 것.
+    """
     pool = [s for s in json.loads((ROOT / "local_eval" / "holdout_v2.json").read_text(encoding="utf-8"))["samples"]
-            if str(s.get("tier", "")).startswith("unseen")]
+            if tier == "all" or str(s.get("tier", "")).startswith(tier)]
     by_ds: dict[str, list] = {}
     for s in pool:
         by_ds.setdefault(s["dataset"], []).append(s)
@@ -80,6 +85,8 @@ def control_eval216(scorer, n: int) -> float:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--n", type=int, default=24, help="측정할 클립 수(많을수록 안정적, 24면 충분)")
+    ap.add_argument("--tier", default="unseen", choices=("unseen", "indomain", "all"),
+                    help="어느 홀드아웃 계층에서 뽑을지 — indomain이 eval과 성격이 가깝다")
     ap.add_argument("--control", type=int, default=12,
                     help="대조 검증에 쓸 eval216 샘플 수 (0이면 생략)")
     args = ap.parse_args()
@@ -90,8 +97,10 @@ def main() -> None:
     from local_eval.kit_bridge import KitScorer, action_mae, get_device
 
     scorer = KitScorer(get_device())
-    clips = pick_clips(args.n)
-    print("클립 %d개 (데이터셋 %d종)" % (len(clips), len({c["dataset"] for c in clips})))
+    clips = pick_clips(args.n, args.tier)
+    if not clips:
+        raise SystemExit("해당 tier 샘플 없음: %s" % args.tier)
+    print("tier=%s · 클립 %d개 (데이터셋 %d종)" % (args.tier, len(clips), len({c["dataset"] for c in clips})))
 
     variants = ("gt", "static", "reversed")
     rows = []
@@ -129,13 +138,13 @@ def main() -> None:
     if agg["reversed"] < agg["gt"]:
         print("  ★역재생이 정답보다 좋다 — 지표가 움직임의 방향조차 구분 못 한다는 뜻")
 
-    res = {"n": len(rows), "agg": agg, "static_minus_gt": gap, "rows": rows}
+    res = {"n": len(rows), "tier": args.tier, "agg": agg, "static_minus_gt": gap, "rows": rows}
     if args.control:
         res["control_eval216_static"] = control_eval216(scorer, args.control)
         res["control_ok"] = abs(res["control_eval216_static"] - 0.4285) < 0.03
     (ROOT / "results").mkdir(exist_ok=True)
-    (ROOT / "results" / "diag_akit_ceiling.json").write_text(json.dumps(res, ensure_ascii=False, indent=1))
-    print("\n→ results/diag_akit_ceiling.json")
+    (ROOT / "results" / ("diag_akit_ceiling_%s.json" % args.tier)).write_text(json.dumps(res, ensure_ascii=False, indent=1))
+    print("\n→ results/diag_akit_ceiling_%s.json" % args.tier)
 
 
 if __name__ == "__main__":
