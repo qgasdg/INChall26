@@ -51,10 +51,37 @@ def pick_clips(n: int) -> list[dict]:
     return picked
 
 
+def control_eval216(scorer, n: int) -> float:
+    """★대조 검증 — 같은 코드 경로로 eval216 정적을 재서 기존 실측 0.4285가 재현되는지 본다.
+
+    재현되면 이 스크립트의 프레임 투입·정답 대조가 옳다는 뜻이고, 크게 어긋나면 천장 측정값을
+    믿을 수 없다(채점기가 영상을 제대로 못 받고 있는 것). 결론을 내기 전에 반드시 통과해야 한다.
+    """
+    from PIL import Image
+
+    from local_eval.kit_bridge import action_mae
+
+    img_dir, act_dir = ROOT / "open/data/eval/images", ROOT / "open/data/eval/actions"
+    pngs = sorted(img_dir.glob("sample_*.png"))[:n]
+    vals = []
+    for p in pngs:
+        f0 = np.asarray(Image.open(p).convert("RGB"))
+        vid = scorer.to_eval_video(np.repeat(f0[None], SEQ, axis=0))[None]
+        acts = np.load(act_dir / f"{p.stem}.npy")                        # (16,6) raw deg
+        vals.append(action_mae(scorer.action_pred(vid)[0], scorer.normalize_actions(acts)))
+    m = float(np.mean(vals))
+    print("\n=== 대조 검증: eval216 정적 %d개 ===" % len(vals))
+    print("  이 코드 경로 %.4f  vs  기존 실측 0.4285  (차이 %+.4f)" % (m, m - 0.4285))
+    print("  %s" % ("→ 재현됨. 위 천장 측정 신뢰 가능" if abs(m - 0.4285) < 0.03 else
+                    "→ ★재현 실패. 프레임 투입이나 정답 대조가 잘못됐다 — 천장 결론 보류"))
+    return m
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--n", type=int, default=24, help="측정할 클립 수(많을수록 안정적, 24면 충분)")
-    ap.add_argument("--batch", type=int, default=4)
+    ap.add_argument("--control", type=int, default=12,
+                    help="대조 검증에 쓸 eval216 샘플 수 (0이면 생략)")
     args = ap.parse_args()
 
     import torch
@@ -103,6 +130,9 @@ def main() -> None:
         print("  ★역재생이 정답보다 좋다 — 지표가 움직임의 방향조차 구분 못 한다는 뜻")
 
     res = {"n": len(rows), "agg": agg, "static_minus_gt": gap, "rows": rows}
+    if args.control:
+        res["control_eval216_static"] = control_eval216(scorer, args.control)
+        res["control_ok"] = abs(res["control_eval216_static"] - 0.4285) < 0.03
     (ROOT / "results").mkdir(exist_ok=True)
     (ROOT / "results" / "diag_akit_ceiling.json").write_text(json.dumps(res, ensure_ascii=False, indent=1))
     print("\n→ results/diag_akit_ceiling.json")
