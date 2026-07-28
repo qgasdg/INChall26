@@ -18,6 +18,6 @@ runtime:
 
 train:
   precision: fp16
-  batch_size: 1            # 32GB + grad_checkpoint 기준 안전값. 여유 확인 후 2로 올릴 것
-  grad_accum: 4            # 실효 배치 4
+  batch_size: 1            # ★1단계(A40)와 동일 micro_batch=1 — 실효 배치를 바꾸면 이어학습 비교가 오염된다
+  grad_accum: 1
   num_workers: 4
