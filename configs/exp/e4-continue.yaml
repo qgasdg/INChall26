@@ -13,6 +13,8 @@
 #     --latent-cache <경로> --align-mode shifted --resolution-mode canvas_aligned
 #     --ft-mode train --lr 3e-5 --num-workers 1 --ckpt-every 500 --eval-every 2000 --max-days 4
 #   → clips=106038 · FT 텐서 48개(103,637,392 params) · micro_batch 1 · step 14000 best(score 0.17368)
+#   FT 텐서 48 = 임베더4 + 출력4 + **블록 4개**×10 (블록 1개 = 10텐서·23.9M params).
+#   우리 top_blocks=2로 돌리면 28텐서·55.8M이 나와 옵티마이저 상태가 안 맞는다(실측 확인).
 #   ★그 스크립트는 태양님 환경의 impl/w2 원본이고 우리 리포는 이식판이라, 우리 코드로 1단계가
 #     동일 재현되는지는 미검증이다(교차재현 과제로 남김).
 #
@@ -33,7 +35,7 @@ model:
 
 train:
   lr: 3.0e-5              # 1단계와 동일(로그 실측 `--lr 3e-5`) — 이어가는 학습이라 바꾸지 않는다
-  top_blocks: 2           # 1단계와 동일. 로그 "FT 텐서 48개" = 임베더4 + 출력4 + 블록2×20
+  top_blocks: 4           # 1단계와 동일 — 48텐서·103.6M이 맞으려면 4블록(위 계산 참고)
   batch_size: 1           # 1단계 micro_batch=1(슬랙 프로필 확인). 실효 배치를 바꾸면 비교가 오염된다
   grad_accum: 1
   eval_every: 1000        # 1단계는 2000 — 개선 추이를 더 촘촘히 보려고 절반으로
