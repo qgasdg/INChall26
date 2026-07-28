@@ -39,7 +39,9 @@ train:
   post_frame_weight: 1.0  # >1이면 후반프레임 가중(exp06)
 
 infer:
-  eta: 0.0               # 결정론(불변)
+  eta: 1.0               # ★E1 실측으로 확정 — eta 1.0이 결정론(0)을 이겼다(0.2011 vs 0.2198,
+                         #   격차가 시드 잡음의 9배). docs/04 §2 · 슬랙 "고정 추론 = eta 1.0·steps 20·batch 1".
+                         #   이전 값 0.0("결정론 불변")은 그 실험 **이전**의 가정이라 폐기됨.
   steps: 20
   method: PNDM           # PNDM | DDIM(eta) | DPM++ | SDE-DPM++ (irasim_runtime.build_sampler)
   best_of_n: 1           # 동종 변형끼리만(이종 best-of-2 무익)
