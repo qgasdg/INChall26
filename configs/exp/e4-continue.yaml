@@ -10,16 +10,21 @@
 
 exp:
   id: e4-continue
-  base_ckpt: ckpts/e3r4_s14000_best.pt   # 태양님 E3 step14000 (out/last.pt로 복사해 재개)
 
 model:
-  init_ckpt: ckpts/bridge_frame_ada_0300000.pt   # 뼈대 로드용. 실제 이어받기는 out/last.pt가 담당
+  # ★태양님 E3 step14000에서 **가중치만** 이어받는다. 학습 범위를 4→12블록으로 넓히면 학습 대상
+  #   개수가 달라져 옵티마이저 상태는 이어받을 수 없다(param group 불일치) → step 0부터 새 옵티마이저.
+  #   새로 푸는 8개 블록은 태양님도 안 건드린 사전학습 값 그대로라, 처음부터 돌리는 것과 출발점이 같다.
+  #   반면 액션 임베더(원래 zero-init)는 14000스텝치 적응이 이미 들어 있어 그대로 챙긴다.
+  init_ckpt: ckpts/e3r4_s14000_best.pt
   finetune: {mode: partial}
 
 train:
   lr: 5.0e-5              # 이어 학습이라 절반으로 — 이미 수렴 근처인 지점을 흔들지 않기 위해
   lr_schedule: {warmup_steps: 200, type: cosine, min_lr: 2.5e-6}
-  top_blocks: 4           # 태양님 ckpt 실측 변화층(embed_state·final_layer·blocks 24~25)과 정합
+  top_blocks: 12          # 태양님은 뒤 2블록(24·25)만 움직였다 — 동작 여지 0.29를 짜려면 더 넓게
   eval_every: 1000
   ckpt_every: 1000
   keep_last: 8            # ★오프라인 A_kit 재선택용 사다리
+  max_wall_hours: 48      # 이틀 예산(사용자 지정). 도달 시 ckpt 저장 후 정상 종료
+  max_steps: 200000       # 사실상 무제한 — 실제 종료는 위 시간 예산이 결정
