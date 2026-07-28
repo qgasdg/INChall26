@@ -1,0 +1,25 @@
+# E4 — 태양님 E3 step14000에서 이어 학습 (2026-07-28 착수).
+#
+# 근거(docs/BOARD 7/28): 뭉개짐은 파인튜닝으로 이미 해결됐고(미학습 클립 유지율 45.9%→97.1%),
+# 남은 실점은 동작 정확도다. 리더보드 1위 0.05562 → 공식 산식 `0.3D+0.3V+0.4A` 로 역산하면
+# 1위의 A_kit ≤ 0.139 인데 우리 정적은 0.4285 — **0.29 이상의 여지**가 동작 쪽에 있다.
+#
+# ★ckpt 선택: 트레이너의 in-loop best는 확산 손실(det_loss) 기준이라 동작 정확도와 무관하다.
+#   여기서는 사다리(keep_last를 크게)만 남기고, **학습 후 A_kit으로 오프라인 재선택**한다.
+#   (킷은 pytorch_lightning이 필요해 학습 env와 공존 불가 → in-loop 편입은 별도 과제)
+
+exp:
+  id: e4-continue
+  base_ckpt: ckpts/e3r4_s14000_best.pt   # 태양님 E3 step14000 (out/last.pt로 복사해 재개)
+
+model:
+  init_ckpt: ckpts/bridge_frame_ada_0300000.pt   # 뼈대 로드용. 실제 이어받기는 out/last.pt가 담당
+  finetune: {mode: partial}
+
+train:
+  lr: 5.0e-5              # 이어 학습이라 절반으로 — 이미 수렴 근처인 지점을 흔들지 않기 위해
+  lr_schedule: {warmup_steps: 200, type: cosine, min_lr: 2.5e-6}
+  top_blocks: 4           # 태양님 ckpt 실측 변화층(embed_state·final_layer·blocks 24~25)과 정합
+  eval_every: 1000
+  ckpt_every: 1000
+  keep_last: 8            # ★오프라인 A_kit 재선택용 사다리

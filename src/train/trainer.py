@@ -158,8 +158,15 @@ def train(cfg: dict, device: str = "cuda", logger=None) -> None:
     ckpt_path = out / "last.pt"
     if ckpt_path.exists():
         st = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        # strict=False는 이름이 하나도 안 맞아도 조용히 넘어간다 — 2026-07-27에 그 탓으로 난수 모델이
+        # 학습된 것처럼 돌아간 사고가 있었다(irasim_runtime._unwrap_state_dict 주석 참고). 적재 수를 센다.
+        msd = rt.model.state_dict()
+        hit = sum(1 for k, v in st["model"].items() if k in msd and tuple(v.shape) == tuple(msd[k].shape))
+        if hit < len(msd) * 0.9:
+            raise RuntimeError("재개 ckpt 적재 %d/%d — 이름·모양이 안 맞는다. %s 확인"
+                               % (hit, len(msd), ckpt_path))
         rt.model.load_state_dict(st["model"], strict=False); opt.load_state_dict(st["opt"]); step = st["step"]
-        logger and logger.info("재개: step %d", step)
+        logger and logger.info("재개: step %d (적재 %d/%d)", step, hit, len(msd))
 
     saved: list[Path] = []
     best = {"score": float("inf")}

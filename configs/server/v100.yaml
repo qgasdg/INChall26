@@ -1,0 +1,23 @@
+# 인하 V100 32GB (bridge-aix JupyterLab) 하드웨어 설정.
+# ★V100 주의 2건:
+#   - bf16 금지. `torch.cuda.is_bf16_supported()`가 True를 주지만 **에뮬레이션**이라
+#     실측 fp16 83.5 / bf16 10.0 / fp32 13.5 TFLOPS — bf16이 fp32보다도 느리다(sm_70에 bf16 텐서코어 없음).
+#   - flash-attn2는 sm_80+ 전용 → 미탐지 시 math로 강등된다(정상).
+
+server:
+  name: v100-inha
+  gpu: "Tesla V100-SXM2 32GB"
+  vram_gb: 32
+
+runtime:
+  device: cuda
+  precision: fp16
+  attention: math          # V100은 flash 불가 — 명시해 강등 경고를 줄인다
+  matmul_tf32: false       # sm_70에 TF32 없음
+  num_workers: 4
+
+train:
+  precision: fp16
+  batch_size: 1            # 32GB + grad_checkpoint 기준 안전값. 여유 확인 후 2로 올릴 것
+  grad_accum: 4            # 실효 배치 4
+  num_workers: 4
