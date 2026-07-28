@@ -10,6 +10,13 @@
 
 exp:
   id: e4-continue
+  # ── 1단계(태양님 E3, A40) 실제 명령 — train_e3r4.log 첫 줄에서 복원. 재현 시 이 단계를 먼저 돌린다.
+  #   impl/w2/train_w2.py --profile a40_bf16 --init-ckpt bridge_frame_ada_0300000_ema.pt
+  #     --latent-cache <경로> --align-mode shifted --resolution-mode canvas_aligned
+  #     --ft-mode train --lr 3e-5 --num-workers 1 --ckpt-every 500 --eval-every 2000 --max-days 4
+  #   → clips=106038 · FT 텐서 48개(103,637,392 params) · step 14000에서 best(score 0.17368)
+  #   ★주의: 그 스크립트는 태양님 환경의 impl/w2 원본이다. 우리 리포는 그것의 이식판이라
+  #     **우리 코드로 1단계가 동일 재현되는지는 미검증**이다(교차재현 과제로 남김).
 
 model:
   # ★태양님 E3 step14000에서 **가중치만** 이어받는다. 학습 범위를 4→12블록으로 넓히면 학습 대상
@@ -20,9 +27,11 @@ model:
   finetune: {mode: partial}
 
 train:
-  lr: 5.0e-5              # 이어 학습이라 절반으로 — 이미 수렴 근처인 지점을 흔들지 않기 위해
+  lr: 3.0e-5              # ★1단계와 동일값(태양님 로그 실측 `--lr 3e-5`). 새로 푸는 8블록이 사전학습
+                          #   값에서 출발하므로 더 낮출 이유는 없고, 올리면 이미 적응된 부분이 흔들린다.
   lr_schedule: {warmup_steps: 200, type: cosine, min_lr: 2.5e-6}
-  top_blocks: 12          # 태양님은 뒤 2블록(24·25)만 움직였다 — 동작 여지 0.29를 짜려면 더 넓게
+  top_blocks: 12          # 1단계는 뒤 2블록이었다(로그 "학습 파라미터 48개 텐서" = 임베더4+출력4+2블록×20)
+                          # → 2→12로 넓힌다. 동작 여지 0.29를 뒤 2블록으로 짜내긴 어렵다
   eval_every: 1000
   ckpt_every: 1000
   keep_last: 8            # ★오프라인 A_kit 재선택용 사다리
