@@ -7,10 +7,10 @@
 기준선(실측): 제로샷 0.5933 · E3 step14000 0.4730 · 정적 0.4285 · 리더보드 1위 추정 ≤0.139
 ★단 제로샷 0.5933은 E1 스텝 스윕(exp-05) 값이고 그때의 eta가 원장에 안 남아 있다. 태양님 생성은
   eta 1.0이었다(로그 확인). 눈금을 맞추려면 **원본 ckpt도 사다리에 함께 넣어** 같은 설정으로 재측정할 것:
-    --ckpts "{ckpts/bridge_frame_ada_0300000.pt,ckpts/e3r4_s14000_best.pt,local_runs/e4-continue/ckpt_*.pt}"
+    --ckpts ckpts/bridge_frame_ada_0300000.pt ckpts/e3r4_s14000_best.pt "local_runs/e4-continue/ckpt_*.pt"
 
 ★2단계로 나눠 실행한다 — 킷(pytorch_lightning)과 학습 env가 공존할 수 없기 때문:
-  1) 생성  conda torch260:  scripts/rank_ckpts_akit.py gen   --ckpts "local_runs/e4-continue/ckpt_*.pt"
+  1) 생성  conda torch260:  scripts/rank_ckpts_akit.py gen --ckpts A.pt B.pt "runs/ckpt_*.pt"
   2) 채점  킷 .venv     :  scripts/rank_ckpts_akit.py score --npz-dir local_runs/akit_rank
 
 샘플 수: 기본 48개(전량 216의 22%). 순위만 보면 충분하고 ckpt당 ~20분이면 끝난다.
@@ -68,9 +68,9 @@ def cmd_gen(args) -> None:
     align = cfg.get("data", {}).get("align_mode", "shifted")
 
     samples = _eval_samples(args.n)
-    ckpts = sorted(glob.glob(args.ckpts))
+    ckpts = sorted({p for pat in args.ckpts for p in glob.glob(pat)})
     if not ckpts:
-        raise SystemExit("ckpt 없음: %s" % args.ckpts)
+        raise SystemExit("ckpt 없음: %s" % " ".join(args.ckpts))
     outdir = Path(args.out); outdir.mkdir(parents=True, exist_ok=True)
     print("ckpt %d개 × 샘플 %d개 · steps=%d eta=%.1f seed=%d"
           % (len(ckpts), len(samples), args.steps, args.eta, args.seed))
@@ -135,7 +135,9 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     g = sub.add_parser("gen", help="conda torch260 — ckpt별 eval 샘플 생성 → npz")
-    g.add_argument("--ckpts", required=True, help='글롭 예: "local_runs/e4-continue/ckpt_*.pt"')
+    g.add_argument("--ckpts", required=True, nargs="+",
+                   help='경로/글롭 여러 개 (셸 중괄호는 파이썬 glob이 못 읽으니 공백으로 나열). '
+                        '예: ckpts/base.pt "local_runs/e4-continue/ckpt_*.pt"')
     g.add_argument("--n", type=int, default=48, help="eval216 중 사용할 샘플 수(균등 간격)")
     g.add_argument("--steps", type=int, default=20)
     g.add_argument("--eta", type=float, default=1.0, help="E1 실측상 1.0이 결정론(0)을 이김")
