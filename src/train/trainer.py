@@ -10,6 +10,7 @@
 """
 from __future__ import annotations
 
+import math
 import time
 from pathlib import Path
 
@@ -17,6 +18,38 @@ from src.data.dataset import (SO100ClipDataset, SO100LatentDataset, build_sample
                               build_window_index)
 
 _EVAL_CACHE: dict = {}
+
+
+def make_lr_fn(cfg: dict, base_lr: float, run_start: int, max_steps: int, logger=None):
+    """train.lr_schedule → (전역 step → 학습률) 함수. warmup 후 cosine 감쇠.
+
+    ★2026-07-30까지 이 스케줄이 **미구현**이었다(config의 lr_schedule은 읽히지 않는 죽은 키였다).
+      학습 범위를 넓혀 새 블록을 풀 때는 옵티마이저 모멘텀이 0에서 출발하는데, Adam은 바이어스
+      보정 때문에 첫 스텝의 갱신 폭이 사실상 lr 그대로 나온다 — 잘 학습된 사전학습 가중치에 큰 충격이다.
+      warmup이 그 충격을 없앤다. 이어학습(범위 동일·모멘텀 이어받음)에는 없어도 무해했다.
+
+    진행도는 **이 런에서 밟은 스텝**(step - run_start)으로 센다. 재개한 전역 step으로 세면
+    이미 warmup 구간을 지난 것으로 취급돼 warmup이 통째로 건너뛰어진다.
+    """
+    sc = _g(cfg, "train.lr_schedule", {}) or {}
+    warm = int(sc.get("warmup_steps", 0) or 0)
+    stype = str(sc.get("type", "none")).lower()
+    min_lr = float(sc.get("min_lr", 0.0) or 0.0)
+    span = max(1, max_steps - run_start - warm)
+    if logger:
+        logger.info("LR 스케줄: base=%.2e warmup=%d type=%s min=%.2e (이 런 %d→%d)",
+                    base_lr, warm, stype, min_lr, run_start, max_steps)
+
+    def lr_at(step: int) -> float:
+        local = step - run_start
+        if warm and local < warm:
+            return base_lr * (local + 1) / warm
+        if stype == "cosine":
+            p = min(1.0, max(0.0, (local - warm) / span))
+            return min_lr + 0.5 * (base_lr - min_lr) * (1.0 + math.cos(math.pi * p))
+        return base_lr
+
+    return lr_at
 
 
 def _g(cfg: dict, path: str, default=None):
@@ -189,6 +222,7 @@ def train(cfg: dict, device: str = "cuda", logger=None) -> None:
             atomic_save({**_state(), "score": score}, out / "best.pt")
             logger and logger.info("★best 갱신 step %d score %.5f", step, score)
 
+    lr_fn = make_lr_fn(cfg, lr, run_start=step, max_steps=max_steps, logger=logger)
     t0 = time.time(); budget_s = max_hours * 3600
     logger and logger.info("학습 시작 FT=%s clips=%d", ft, len(clips))
     rt.model.train(); opt.zero_grad()
@@ -197,16 +231,20 @@ def train(cfg: dict, device: str = "cuda", logger=None) -> None:
             loss = _step_loss(rt, b, post_w) / grad_accum
             loss.backward()
             if (i + 1) % grad_accum == 0:
+                cur_lr = lr_fn(step)
+                for pg in opt.param_groups:
+                    pg["lr"] = cur_lr
                 torch.nn.utils.clip_grad_norm_(trainable, getattr(rt.cfg, "clip_max_norm", 0.1))
                 opt.step(); opt.zero_grad(); step += 1
 
                 if step % 100 == 0:
                     lv = float(loss) * grad_accum
-                    logger and logger.info("step %d loss %.4f (%.1fh)", step, lv, (time.time() - t0) / 3600)
+                    logger and logger.info("step %d loss %.4f lr %.2e (%.1fh)",
+                                           step, lv, cur_lr, (time.time() - t0) / 3600)
                     lc = out / "loss.csv"
                     if not lc.exists():
-                        lc.open("w").write("step,loss\n")
-                    lc.open("a").write(f"{step},{lv:.6f}\n")
+                        lc.open("w").write("step,loss,lr\n")
+                    lc.open("a").write(f"{step},{lv:.6f},{cur_lr:.3e}\n")
                 if step % ckpt_every == 0:
                     save_rotating()
                 if step % eval_every == 0:
