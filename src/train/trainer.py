@@ -91,7 +91,11 @@ def select_trainable(model, ft_mode: str, top_blocks: int = 4, logger=None):
 
 
 def frame_weights(num_frames: int, w_last: float, device):
-    """후반프레임 가중(exp06): frame0=1 → 선형 증가 → 마지막=w_last (평균 1 정규화)."""
+    """후반프레임 가중(exp06): 첫 예측프레임=1 → 선형 증가 → 마지막=w_last (평균 1 정규화).
+
+    num_frames 는 **손실을 거는 프레임 수**(=16 − mask_frame_num = 15)다. 조건 프레임은 손실에서
+    제외되므로 전체 16을 넣으면 브로드캐스트가 어긋난다.
+    """
     import torch
 
     w = torch.linspace(1.0, w_last, num_frames, device=device)
@@ -108,8 +112,14 @@ def _step_loss(rt, batch, post_w: float):
     mk = dict(actions=batch["action_cond"].to(rt.device), mask_frame_num=rt.cfg.mask_frame_num)
     t = torch.randint(0, rt.diffusion.num_timesteps, (latents.shape[0],), device=rt.device)
     out = rt.diffusion.training_losses(rt.model, latents, t, mk)
-    if post_w > 1.0 and "loss_perframe" in out:
-        return (out["loss_perframe"] * frame_weights(latents.shape[1], post_w, rt.device)).mean()
+    if post_w > 1.0:
+        # ★2026-08-01까지 이 분기가 **죽어 있었다**: 벤더가 주는 키는 `mse_frame`인데 `loss_perframe`을
+        #   찾고 있어 조건이 영원히 거짓 → post_frame_weight 설정이 조용히 무시됐다.
+        #   프레임 수도 틀렸다 — 손실은 조건 프레임을 뺀 15장에만 걸리는데 16을 넘기고 있었다.
+        pf = out.get("mse_frame")                                   # (b, 16-mask_frame_num)
+        if pf is None:
+            raise KeyError("벤더 training_losses에 'mse_frame' 없음 — post_frame_weight 사용 불가")
+        return (pf * frame_weights(pf.shape[1], post_w, rt.device)).mean()
     return out["loss"].mean()
 
 
