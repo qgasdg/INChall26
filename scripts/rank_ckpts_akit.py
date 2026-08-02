@@ -24,6 +24,7 @@ import argparse
 import glob
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -108,8 +109,10 @@ def cmd_score(args) -> None:
         vids, acts = z["videos"], z["actions"]
         vals = [action_mae(scorer.action_pred(scorer.to_eval_video(vids[i])[None])[0],
                            scorer.normalize_actions(acts[i])) for i in range(len(vids))]
-        step = int("".join(c for c in f.stem if c.isdigit()) or -1)
-        rows.append({"ckpt": f.stem, "step": step, "n": len(vals), "akit": float(np.mean(vals))})
+        m = re.search(r"(\d{4,})", f.stem)          # 파일명에서 스텝 추출(예: e3r4_s14000_best → 14000)
+        step = int(m.group(1)) if m else -1
+        rows.append({"ckpt": f.stem, "step": step, "n": len(vals),
+                     "akit": float(np.mean(vals)), "per_sample": [float(v) for v in vals]})
         print("  %-28s step %6d  A_kit %.4f (n=%d)" % (f.stem, step, rows[-1]["akit"], len(vals)), flush=True)
 
     rows.sort(key=lambda r: r["step"])
@@ -120,6 +123,17 @@ def cmd_score(args) -> None:
         print("  step %6d  %.4f  %s" % (r["step"], r["akit"], bar))
     if rows:
         best = min(rows, key=lambda r: r["akit"])
+        # ★짝지은 비교 — 모든 ckpt를 같은 샘플·같은 시드로 재므로 샘플별 차이를 직접 볼 수 있다.
+        #   평균만 보면 "이 차이가 잡음인지" 알 수 없다. 표준오차를 함께 찍는다.
+        print("\n=== 최저(%s, %.4f) 대비 차이 ± 표준오차 ===" % (best["ckpt"], best["akit"]))
+        b = np.asarray(best["per_sample"])
+        for r in rows:
+            if r["ckpt"] == best["ckpt"] or len(r["per_sample"]) != len(b):
+                continue
+            d = np.asarray(r["per_sample"]) - b
+            se = float(d.std(ddof=1) / np.sqrt(len(d)))
+            sig = "유의" if abs(d.mean()) > 2 * se else "잡음 범위"
+            print("  step %6d  %+.4f ± %.4f  (%s)" % (r["step"], d.mean(), se, sig))
         print("\n  최저 = %s (A_kit %.4f)" % (best["ckpt"], best["akit"]))
         print("  %s" % ("→ 정적(0.4285) 돌파. 제출 후보 — --n 216으로 재측정 후 판단"
                         if best["akit"] < 0.4285 else
