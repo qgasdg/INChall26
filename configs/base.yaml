@@ -37,6 +37,10 @@ train:
   ckpt_every: 2000
   keep_last: 2            # 공유계정 쿼터: 최근 N + best 1
   post_frame_weight: 1.0  # >1이면 후반프레임 가중(exp06)
+  ema: {enabled: true, decay: 0.999}   # ★가중치 이동평균 — 약 1,000스텝 평균본을 `ema` 칸에 저장.
+                          # 생성은 이 칸을 먼저 읽는다(irasim_runtime._unwrap_state_dict).
+                          # 배치 1 학습은 스텝마다 출렁여 이웃 ckpt A_kit이 0.078까지 벌어졌다(E5 실측).
+                          # IRASim 원본도 EMA 사본으로 생성한다 — 우리 이식판에 빠져 있던 항목.
 
 infer:
   eta: 1.0               # ★E1 실측으로 확정 — eta 1.0이 결정론(0)을 이겼다(0.2011 vs 0.2198,

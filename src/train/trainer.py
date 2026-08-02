@@ -2,7 +2,7 @@
 
 - FT: full | partial(embed_state + final_layer + 상위 K블록) | lora(미이식 — impl/w2/lora.py)
 - 손실: IRASim 디퓨전 손실(pre_encode latent 또는 on-the-fly video). 후반프레임 가중 옵션(exp06)
-- ckpt: 원자적 저장 + keep-last N 회전 + best 1(det_loss 최저), 재개
+- ckpt: 원자적 저장 + keep-last N 회전 + best 1(det_loss 최저), 재개. **EMA 사본(`ema` 칸) 동봉**
 - eval: eval-every 마다 결정론 det_loss(고정 subset·t격자·seed) → local_lb.csv, best 판정
   (전체 DV_w 생성채점은 별도 서브시스템 — infer/generate + eval/local_score 연동은 후속)
 
@@ -18,6 +18,46 @@ from src.data.dataset import (SO100ClipDataset, SO100LatentDataset, build_sample
                               build_window_index)
 
 _EVAL_CACHE: dict = {}
+
+
+class EMA:
+    """학습 가중치의 이동평균 — 스텝마다 출렁이는 가중치를 평균 내 안정된 사본을 따로 둔다.
+
+    왜 필요한가(2026-08-02): 배치 1로 학습하다 보니 **이웃 체크포인트끼리 A_kit이 0.078씩 튄다**
+      (E5 실측: step 10,000 0.4663 / 11,000 0.5295 / 12,000 0.5439). 우리가 재려는 개선폭이
+      0.01 수준인데 흔들림이 그 8배라 어떤 실험이 나은지 판단이 불가능했다.
+      IRASim 원본은 EMA 사본으로 생성·평가하는데 우리 이식판에는 이게 통째로 빠져 있었다.
+
+    학습 대상 파라미터만 담는다 — 얼어 있는 층은 변하지 않아 평균낼 것이 없다(메모리 절약).
+    저장 시 `ema` 칸에 **전체 state_dict**로 펼쳐 넣으므로, 생성 쪽은 아무것도 안 고쳐도 된다
+    (`irasim_runtime._unwrap_state_dict`가 `ema`를 먼저 찾는다).
+    """
+
+    def __init__(self, named_params, decay: float):
+        import torch
+
+        self.decay = float(decay)
+        self.names = [n for n, _ in named_params]
+        # ★파라미터를 직접 들고 있는다. select_trainable()이 돌려주는 리스트와 named_parameters()의
+        #   순서가 달라(모듈 등록 순 vs 해제 순), 밖에서 받은 리스트와 zip 하면 짝이 어긋난다.
+        self.params = [p for _, p in named_params]
+        with torch.no_grad():
+            self.shadow = [p.detach().clone().float() for p in self.params]
+
+    def update(self) -> None:
+        import torch
+
+        with torch.no_grad():
+            for s, p in zip(self.shadow, self.params):
+                s.mul_(self.decay).add_(p.detach().float(), alpha=1.0 - self.decay)
+
+    def state_dict(self, model) -> dict:
+        """모델 전체 state_dict에 EMA 값을 덮어쓴 사본(=생성에 쓸 가중치)."""
+        sd = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+        for n, s in zip(self.names, self.shadow):
+            if n in sd:
+                sd[n] = s.detach().cpu().to(sd[n].dtype)
+        return sd
 
 
 def make_lr_fn(cfg: dict, base_lr: float, run_start: int, max_steps: int, logger=None):
@@ -211,11 +251,26 @@ def train(cfg: dict, device: str = "cuda", logger=None) -> None:
         rt.model.load_state_dict(st["model"], strict=False); opt.load_state_dict(st["opt"]); step = st["step"]
         logger and logger.info("재개: step %d (적재 %d/%d)", step, hit, len(msd))
 
+    ema = None
+    if bool(_g(cfg, "train.ema.enabled", True)):
+        named = [(n, p) for n, p in rt.model.named_parameters() if p.requires_grad]
+        ema = EMA(named, float(_g(cfg, "train.ema.decay", 0.999)))
+        if ckpt_path.exists() and "ema" in st:      # 재개 시 EMA도 이어받는다
+            for i, n in enumerate(ema.names):
+                if n in st["ema"]:
+                    ema.shadow[i].copy_(st["ema"][n].float().to(ema.shadow[i].device))
+            logger and logger.info("EMA 이어받음")
+        logger and logger.info("EMA 켜짐: decay=%.4f 대상 %d텐서 (약 %d스텝 평균)",
+                               ema.decay, len(ema.names), int(1 / (1 - ema.decay)))
+
     saved: list[Path] = []
     best = {"score": float("inf")}
 
     def _state():
-        return {"model": rt.model.state_dict(), "opt": opt.state_dict(), "step": step}
+        s = {"model": rt.model.state_dict(), "opt": opt.state_dict(), "step": step}
+        if ema is not None:
+            s["ema"] = ema.state_dict(rt.model)     # ★생성은 이 칸을 먼저 읽는다
+        return s
 
     def save_rotating():
         p = out / f"ckpt_{step:07d}.pt"
@@ -246,6 +301,8 @@ def train(cfg: dict, device: str = "cuda", logger=None) -> None:
                     pg["lr"] = cur_lr
                 torch.nn.utils.clip_grad_norm_(trainable, getattr(rt.cfg, "clip_max_norm", 0.1))
                 opt.step(); opt.zero_grad(); step += 1
+                if ema is not None:
+                    ema.update()
 
                 if step % 100 == 0:
                     lv = float(loss) * grad_accum
