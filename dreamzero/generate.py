@@ -92,15 +92,13 @@ def build_head(root, base, lora, device="cuda"):
     ab_by_key = {name + ".weight": ab for name, ab in pairs.items() if "A" in ab and "B" in ab}
 
     idx = json.loads((base / "diffusion_pytorch_model.safetensors.index.json").read_text())["weight_map"]
-    n = merged = 0
+    n = 0
     for s_name in sorted(set(idx.values())):
         sd = {}
         for k, v in load_file(str(base / s_name)).items():
             w = v.to(torch.float32)
-            ab = ab_by_key.get(k)
-            if ab is not None:
-                w = w + (ab["B"].float() @ ab["A"].float()) * scale
-                merged += 1
+            # ★LoRA 를 여기서 합치면 안 된다. 델타가 베이스의 2~6% 라 fp8(가수 3비트)
+            #   반올림에 73.8% 가 먹힌다(bf16 이면 90.2% 반영). 아래에서 별도 모듈로 얹는다.
             # ★fp8 은 Linear 가중치(2차원)에만. 노름(1차원)·패치임베딩(5차원 Conv3d)은
             #   fp8 커널이 없고 코드가 .weight 를 직접 읽으므로 bf16 으로 둔다(크기도 작다).
             sd[k] = (w.to(torch.float8_e4m3fn) if w.ndim == 2 else w.to(torch.bfloat16)).cuda()
@@ -111,9 +109,8 @@ def build_head(root, base, lora, device="cuda"):
     # 액션·상태 모듈은 작고 정밀도가 중요하니 bf16 으로 둔다
     head.model.load_state_dict({k: v.to(torch.bfloat16).cuda() for k, v in lw.items() if ".lora_" not in k},
                                strict=False, assign=True)
-    del lw, ab_by_key, pairs
-    print("  베이스 %d · LoRA %d개 병합 · meta 잔여 %d · GPU %.1fGB"
-          % (n, merged, sum(v.is_meta for v in head.model.state_dict().values()),
+    print("  베이스 %d · meta 잔여 %d · GPU %.1fGB"
+          % (n, sum(v.is_meta for v in head.model.state_dict().values()),
              torch.cuda.memory_allocated() / 2**30), flush=True)
 
     enable_vram_management(
@@ -128,6 +125,20 @@ def build_head(root, base, lora, device="cuda"):
     for m in head.model.modules():
         if hasattr(m, "onload"):
             m.onload()
+
+    # ★LoRA 를 베이스에 합치지 않고 bf16 으로 따로 얹는다. AutoWrappedLinear.forward 가
+    #   out + x @ A.T @ B.T 를 계산 dtype(bf16)에서 더해준다. scale=alpha/rank=1.0 이라
+    #   별도 보정이 필요 없다. 209MB 뿐이라 메모리 부담도 없다.
+    mods = dict(head.model.named_modules())
+    attached = 0
+    for name, d in pairs.items():
+        m = mods.get(name)
+        if m is not None and hasattr(m, "lora_A_weights") and "A" in d and "B" in d:
+            m.lora_A_weights = [d["A"].to(torch.bfloat16).cuda()]
+            m.lora_B_weights = [d["B"].to(torch.bfloat16).cuda()]
+            attached += 1
+    print("  ★LoRA bf16 부착 %d/%d 모듈 (병합 대신)" % (attached, len(pairs)), flush=True)
+    del lw, ab_by_key, pairs
     head.vae = head.vae.to(device, dtype=torch.bfloat16).eval()
     head.image_encoder = head.image_encoder.to(device, dtype=torch.bfloat16).eval()
     head.text_encoder = head.text_encoder.eval()   # ★T5(11GB)는 CPU 유지 — 아래서 한 번 쓰고 버린다
@@ -186,6 +197,9 @@ def main() -> None:
     ap.add_argument("--sample", default="sample_000000")
     ap.add_argument("--action-mode", default="true", choices=("true","zero","half"),
                     help="진단용. zero=움직임 없음, half=크기 절반(fps 가설 검증)")
+    ap.add_argument("--state-mode", default="true", choices=("true", "zero", "mean"),
+                    help="진단용. zero=상태 0, mean=학습 평균. eval 의 wrist_roll 이 z=7.85 로 "
+                         "학습 분포 밖이라 상태 인코더를 오염시키는지 본다")
     ap.add_argument("--out", default="out.mp4")
     ap.add_argument("--prompt", default="a robot arm manipulating an object on a table")
     ap.add_argument("--blocks", type=int, default=2, help="블록 수. 1블록=latent 3, 이후 +2. latent L -> 영상 (L-1)*4+1 프레임. 2블록이면 17프레임으로 대회 16프레임을 덮는다")
@@ -226,7 +240,11 @@ def main() -> None:
     clean_action = torch.from_numpy(a_pad)[None].cuda().to(torch.bfloat16)
 
     s_pad = np.zeros((1, 64), dtype=np.float32)
-    s_pad[0, :6] = (anchor - STATE_MEAN) / STATE_STD
+    if args.state_mode == "true":
+        s_pad[0, :6] = (anchor - STATE_MEAN) / STATE_STD
+    elif args.state_mode == "mean":
+        s_pad[0, :6] = 0.0     # 정규화 공간에서 0 = 학습 평균 자세
+    # zero 는 그대로 0 (mean 과 같지만 의미를 구분해 남긴다)
     state = torch.from_numpy(s_pad)[None].cuda().to(torch.bfloat16)
 
     tok = AutoTokenizer.from_pretrained(str(Path(args.base) / "google" / "umt5-xxl"))
