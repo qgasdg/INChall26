@@ -39,7 +39,8 @@ def resample(a: np.ndarray, n: int) -> np.ndarray:
     return np.stack([np.interp(t_new, t_old, a[:, i]) for i in range(a.shape[1])], axis=1)
 
 
-def build_head(root, base, lora, device="cuda"):
+def build_head(root, base, lora, device="cuda", store_dtype="float8_e4m3fn",
+               max_gpu_params=None, on_head_ready=None):
     """WANPolicyHead 를 세우되 DiT 는 meta 로 만들고 나중에 스트리밍으로 채운다."""
     import torch
     from hydra.utils import instantiate
@@ -75,7 +76,15 @@ def build_head(root, base, lora, device="cuda"):
     head = WM.WANPolicyHead(config=WM.WANPolicyHeadConfig(**OmegaConf.to_container(cfg_obj, resolve=True)))
     WM.instantiate = orig_instantiate
 
-    print("  DiT 스트리밍 적재 (샤드 -> LoRA 병합 -> fp8 -> GPU)…", flush=True)
+    # ★T5(11GB)를 DiT 적재 전에 해제한다. bf16 모드면 모델이 CPU 에 33GB 를 잡는데
+    #   T5·CLIP 까지 들고 있으면 62GB RAM 을 넘긴다.
+    if on_head_ready is not None:
+        on_head_ready(head)
+
+    store_dt = getattr(torch, store_dtype)
+    on_gpu = store_dtype.startswith("float8")     # fp8 이면 GPU 직행, bf16 이면 CPU 에 두고 오프로드
+    print("  DiT 스트리밍 적재 (%s, %s)…" % (store_dtype, "GPU 직행" if on_gpu else "CPU 후 부분 오프로드"),
+          flush=True)
     # ★CPU 에 33GB 를 모으면 헤드가 든 T5(11GB)+CLIP(4.5GB) 와 합쳐 62GB RAM 을 넘긴다.
     #   샤드 하나를 읽는 즉시 LoRA 를 병합하고 fp8 로 바꿔 GPU 로 보낸다 -> CPU 피크 = 샤드 1개.
     lw = load_file(str(lora / "model.safetensors"))
@@ -101,14 +110,17 @@ def build_head(root, base, lora, device="cuda"):
             #   반올림에 73.8% 가 먹힌다(bf16 이면 90.2% 반영). 아래에서 별도 모듈로 얹는다.
             # ★fp8 은 Linear 가중치(2차원)에만. 노름(1차원)·패치임베딩(5차원 Conv3d)은
             #   fp8 커널이 없고 코드가 .weight 를 직접 읽으므로 bf16 으로 둔다(크기도 작다).
-            sd[k] = (w.to(torch.float8_e4m3fn) if w.ndim == 2 else w.to(torch.bfloat16)).cuda()
+            q = w.to(store_dt) if (w.ndim == 2 and store_dt != torch.bfloat16) else w.to(torch.bfloat16)
+            sd[k] = q.cuda() if on_gpu else q
         r = head.model.load_state_dict(sd, strict=False, assign=True)
         n += len(sd) - len(r.unexpected_keys)
         del sd
         torch.cuda.empty_cache()
     # 액션·상태 모듈은 작고 정밀도가 중요하니 bf16 으로 둔다
     head.model.load_state_dict({k: v.to(torch.bfloat16).cuda() for k, v in lw.items() if ".lora_" not in k},
-                               strict=False, assign=True)
+                               strict=False, assign=True) if on_gpu else \
+        head.model.load_state_dict({k: v.to(torch.bfloat16) for k, v in lw.items() if ".lora_" not in k},
+                                   strict=False, assign=True)
     print("  베이스 %d · meta 잔여 %d · GPU %.1fGB"
           % (n, sum(v.is_meta for v in head.model.state_dict().values()),
              torch.cuda.memory_allocated() / 2**30), flush=True)
@@ -118,13 +130,32 @@ def build_head(root, base, lora, device="cuda"):
         # Linear 만 래핑한다. AutoWrappedModule 은 .weight 를 노출하지 않아 노름·Conv3d 를
         # 감싸면 모델 코드가 터진다(AutoWrappedLinear 는 nn.Linear 상속이라 안전).
         module_map={torch.nn.Linear: AutoWrappedLinear},
-        module_config=dict(offload_dtype=torch.float8_e4m3fn, offload_device="cuda",
-                           onload_dtype=torch.float8_e4m3fn, onload_device="cuda",
-                           computation_dtype=torch.bfloat16, computation_device="cuda"))
+        module_config=dict(offload_dtype=store_dt, offload_device="cuda",
+                           onload_dtype=store_dt, onload_device="cuda",
+                           computation_dtype=torch.bfloat16, computation_device="cuda"),
+        max_num_param=max_gpu_params,
+        overflow_module_config=dict(offload_dtype=store_dt, offload_device="cpu",
+                                    onload_dtype=store_dt, onload_device="cpu",
+                                    computation_dtype=torch.bfloat16, computation_device="cuda"))
     # 가중치는 이미 fp8 로 GPU 에 있다 — onload 는 no-op 이지만 상태 일관성을 위해 부른다
     for m in head.model.modules():
         if hasattr(m, "onload"):
             m.onload()
+
+    # ★래핑되지 않은 모듈(노름·Conv3d·임베딩)은 오프로드 대상이 아니므로 GPU 로 올린다.
+    #   bf16 모드에선 전부 CPU 에 실려 있어 이걸 안 하면 device 불일치로 터진다.
+    moved = 0
+    for mod in head.model.modules():
+        if isinstance(mod, AutoWrappedLinear):
+            continue
+        for nm, prm in list(mod.named_parameters(recurse=False)):
+            if prm is not None and prm.device.type == "cpu":
+                setattr(mod, nm, torch.nn.Parameter(prm.data.cuda(), requires_grad=False)); moved += 1
+        for nm, buf in list(mod.named_buffers(recurse=False)):
+            if buf is not None and buf.device.type == "cpu":
+                mod.register_buffer(nm, buf.cuda()); moved += 1
+    if moved:
+        print("  비-Linear 모듈 %d개 GPU 이동" % moved, flush=True)
 
     # ★LoRA 를 베이스에 합치지 않고 bf16 으로 따로 얹는다. AutoWrappedLinear.forward 가
     #   out + x @ A.T @ B.T 를 계산 dtype(bf16)에서 더해준다. scale=alpha/rank=1.0 이라
@@ -134,6 +165,7 @@ def build_head(root, base, lora, device="cuda"):
     for name, d in pairs.items():
         m = mods.get(name)
         if m is not None and hasattr(m, "lora_A_weights") and "A" in d and "B" in d:
+            # LoRA 는 209MB 뿐이라 오프로드 모드에서도 항상 GPU 에 둔다 (계산이 GPU 에서 난다)
             m.lora_A_weights = [d["A"].to(torch.bfloat16).cuda()]
             m.lora_B_weights = [d["B"].to(torch.bfloat16).cuda()]
             attached += 1
@@ -202,6 +234,13 @@ def main() -> None:
                          "학습 분포 밖이라 상태 인코더를 오염시키는지 본다")
     ap.add_argument("--out", default="out.mp4")
     ap.add_argument("--prompt", default="a robot arm manipulating an object on a table")
+    ap.add_argument("--store-dtype", default="float8_e4m3fn",
+                    help="가중치 저장 dtype. bfloat16 이면 33GB 라 CPU 오프로드가 필요하다")
+    ap.add_argument("--max-gpu-params", type=float, default=None,
+                    help="GPU 에 둘 최대 파라미터 수. bf16 이면 10e9 (=20GB) 정도")
+    ap.add_argument("--steps", type=int, default=None,
+                    help="디노이징 스텝. 코드는 16 으로 하드코딩돼 있으나 config 는 "
+                         "num_inference_timesteps=4 를 지정한다 — 어느 쪽이 맞는지 본다")
     ap.add_argument("--blocks", type=int, default=2, help="블록 수. 1블록=latent 3, 이후 +2. latent L -> 영상 (L-1)*4+1 프레임. 2블록이면 17프레임으로 대회 16프레임을 덮는다")
     args = ap.parse_args()
 
@@ -216,9 +255,29 @@ def main() -> None:
     from transformers.feature_extraction_utils import BatchFeature
 
     EV = Path(args.eval_dir)
+    EV2 = Path(args.eval_dir)
+    tok = AutoTokenizer.from_pretrained(str(Path(args.base) / "google" / "umt5-xxl"))
+    def enc(s_):
+        o = tok(s_, return_tensors="pt", padding="max_length", truncation=True, max_length=512)
+        return o.input_ids, o.attention_mask
+    ti_c, tm_c = enc(args.prompt)
+    ni_c, nm_c = enc("")
+    cache = {}
+
+    def prep_text(head):
+        """T5 를 DiT 적재 전에 쓰고 해제한다 — bf16 모드에서 RAM 을 아끼려면 순서가 중요하다."""
+        with torch.no_grad():
+            cache["pos"] = head.encode_prompt(ti_c, tm_c).cuda()
+            cache["neg"] = head.encode_prompt(ni_c, nm_c).cuda()
+        del head.text_encoder
+        head.text_encoder = torch.nn.Identity()
+        import gc; gc.collect(); torch.cuda.empty_cache()
+        print("  프롬프트 임베딩 %s · T5 해제" % (tuple(cache["pos"].shape),), flush=True)
+
     print("=== 1. 모델 ===")
     t0 = time.time()
-    head = build_head(args.root, args.base, args.lora)
+    head = build_head(args.root, args.base, args.lora, store_dtype=args.store_dtype,
+                      max_gpu_params=args.max_gpu_params, on_head_ready=prep_text)
     print("  %.1f초" % (time.time() - t0))
 
     print("\n=== 2. 입력 ===")
@@ -247,24 +306,9 @@ def main() -> None:
     # zero 는 그대로 0 (mean 과 같지만 의미를 구분해 남긴다)
     state = torch.from_numpy(s_pad)[None].cuda().to(torch.bfloat16)
 
-    tok = AutoTokenizer.from_pretrained(str(Path(args.base) / "google" / "umt5-xxl"))
-    def enc(s):
-        o = tok(s, return_tensors="pt", padding="max_length", truncation=True, max_length=512)
-        return o.input_ids.cuda(), o.attention_mask.cuda()
-    ti, tm = enc(args.prompt)
-    ni, nm = enc("")
-
-    # ★T5 는 CPU 에 있다. 프롬프트 임베딩을 한 번만 뽑아 GPU 로 옮기고 T5 를 버린다.
-    #   (프롬프트가 고정이면 매 블록 재계산할 이유가 없다 — 메모리도 11GB 아낀다)
-    with torch.no_grad():
-        emb_pos = head.encode_prompt(ti.cpu(), tm.cpu()).cuda()
-        emb_neg = head.encode_prompt(ni.cpu(), nm.cpu()).cuda()
+    ti, tm, ni, nm = ti_c.cuda(), tm_c.cuda(), ni_c.cuda(), nm_c.cuda()
+    emb_pos, emb_neg = cache["pos"], cache["neg"]
     head.encode_prompt = lambda ids, mask: (emb_pos if ids is ti else emb_neg)
-    del head.text_encoder
-    head.text_encoder = torch.nn.Identity()   # set_frozen_modules_to_eval_mode 가 .eval() 을 부른다
-    import gc; gc.collect(); torch.cuda.empty_cache()
-    print("  프롬프트 임베딩 %s · T5 해제 후 GPU %.1fGB"
-          % (tuple(emb_pos.shape), torch.cuda.memory_allocated() / 2**30))
 
     print("  이미지 %s -> %s · 액션 %s -> %s · |z|max %.2f"
           % (img.shape, im.shape, acts.shape, tuple(clean_action.shape[1:]), np.abs(norm).max()))
@@ -273,7 +317,10 @@ def main() -> None:
         images=images, state=state, embodiment_id=torch.zeros(1, dtype=torch.long).cuda(),
         text=ti, text_attention_mask=tm, text_negative=ni, text_attention_mask_negative=nm))
 
-    print("\n=== 3. 생성 (액션 고정, 비디오만 디노이징) ===")
+    if args.steps is not None:
+        head.num_inference_steps = args.steps
+    print("\n=== 3. 생성 (액션 고정, 비디오만 디노이징) · 스텝 %d ==="
+          % head.num_inference_steps)
     restore = patch_action_forcing(head, clean_action)
     head.current_start_frame = 0
     head.language = None
