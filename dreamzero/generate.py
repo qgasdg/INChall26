@@ -253,13 +253,15 @@ def main() -> None:
     ap.add_argument("--base", required=True)
     ap.add_argument("--lora", required=True)
     ap.add_argument("--eval-dir", required=True)
-    ap.add_argument("--sample", default="sample_000000")
+    ap.add_argument("--sample", default="sample_000000",
+                    help="쉼표 구분 다중 지정 또는 all. 모델은 한 번만 올리고 순회한다")
     ap.add_argument("--action-mode", default="true", choices=("true","zero","half"),
                     help="진단용. zero=움직임 없음, half=크기 절반(fps 가설 검증)")
     ap.add_argument("--state-mode", default="true", choices=("true", "zero", "mean"),
                     help="진단용. zero=상태 0, mean=학습 평균. eval 의 wrist_roll 이 z=7.85 로 "
                          "학습 분포 밖이라 상태 인코더를 오염시키는지 본다")
-    ap.add_argument("--out", default="out.mp4")
+    ap.add_argument("--out", default="out.mp4",
+                    help="샘플이 여러 개면 디렉토리로 취급하고 <sample>.mp4 로 저장한다")
     ap.add_argument("--prompt", default="a robot arm manipulating an object on a table")
     ap.add_argument("--t5-dtype", default="keep", choices=("keep", "bfloat16", "float16"),
                     help="가설 검증용. keep=로드된 정밀도(fp32) 유지. bf16 으로 낮추면 "
@@ -324,90 +326,107 @@ def main() -> None:
                       max_gpu_params=args.max_gpu_params, on_head_ready=prep_text)
     print("  %.1f초" % (time.time() - t0))
 
-    print("\n=== 2. 입력 ===")
-    img = np.asarray(Image.open(EV / "images" / (args.sample + ".png")).convert("RGB"))
-    im = np.asarray(Image.fromarray(img).resize((W, H), Image.BICUBIC))
-    images = torch.from_numpy(im.copy())[None, None].cuda()            # b t h w c (uint8)
+    names = ([f"sample_{i:06d}" for i in range(216)] if args.sample == "all"
+             else [x.strip() for x in args.sample.split(",") if x.strip()])
+    multi = len(names) > 1 or args.sample == "all"
+    if multi:
+        Path(args.out).mkdir(parents=True, exist_ok=True)
+    print("\n=== 샘플 %d개 ===" % len(names))
+    t_all = time.time()
+    for si, sample_id in enumerate(names, 1):
+        out_path = str(Path(args.out) / (sample_id + ".mp4")) if multi else args.out
+        t_s = time.time()
+        print("\n=== 2. 입력 ===")
+        img = np.asarray(Image.open(EV / "images" / (sample_id + ".png")).convert("RGB"))
+        im = np.asarray(Image.fromarray(img).resize((W, H), Image.BICUBIC))
+        images = torch.from_numpy(im.copy())[None, None].cuda()            # b t h w c (uint8)
 
-    acts = np.load(EV / "actions" / (args.sample + ".npy")).astype(np.float64)
-    wins = block_windows(len(acts), args.blocks)
+        acts = np.load(EV / "actions" / (sample_id + ".npy")).astype(np.float64)
+        wins = block_windows(len(acts), args.blocks)
 
-    def make_block_inputs(i0, i1):
-        """블록 구간 [i0,i1] 의 액션을 그 구간 시작 자세 기준 상대값으로."""
-        anchor_b = acts[i0]
-        rel_b = acts[i0:i1 + 1] - anchor_b[None, :]
-        if args.action_mode == "zero":
-            rel_b = np.zeros_like(rel_b)
-        elif args.action_mode == "half":
-            rel_b = rel_b * 0.5
-        r24 = resample(rel_b, head.action_horizon)
-        nrm = (r24 - ACTION_MEAN) / ACTION_STD
-        ap_ = np.zeros((head.action_horizon, head.model.action_dim), dtype=np.float32)
-        ap_[:, :6] = nrm
-        sp_ = np.zeros((1, 64), dtype=np.float32)
-        if args.state_mode == "true":
-            sp_[0, :6] = (anchor_b - STATE_MEAN) / STATE_STD
-        return (torch.from_numpy(ap_)[None].cuda().to(torch.bfloat16),
-                torch.from_numpy(sp_)[None].cuda().to(torch.bfloat16),
-                float(np.abs(nrm).max()))
+        def make_block_inputs(i0, i1):
+            """블록 구간 [i0,i1] 의 액션을 그 구간 시작 자세 기준 상대값으로."""
+            anchor_b = acts[i0]
+            rel_b = acts[i0:i1 + 1] - anchor_b[None, :]
+            if args.action_mode == "zero":
+                rel_b = np.zeros_like(rel_b)
+            elif args.action_mode == "half":
+                rel_b = rel_b * 0.5
+            r24 = resample(rel_b, head.action_horizon)
+            nrm = (r24 - ACTION_MEAN) / ACTION_STD
+            ap_ = np.zeros((head.action_horizon, head.model.action_dim), dtype=np.float32)
+            ap_[:, :6] = nrm
+            sp_ = np.zeros((1, 64), dtype=np.float32)
+            if args.state_mode == "true":
+                sp_[0, :6] = (anchor_b - STATE_MEAN) / STATE_STD
+            return (torch.from_numpy(ap_)[None].cuda().to(torch.bfloat16),
+                    torch.from_numpy(sp_)[None].cuda().to(torch.bfloat16),
+                    float(np.abs(nrm).max()))
 
-    blk = [make_block_inputs(*w) for w in wins]
-    print("  블록별 액션 구간: " + " · ".join(
-        "b%d=[%d:%d] |z|max %.2f" % (i + 1, w[0], w[1], blk[i][2]) for i, w in enumerate(wins)))
-    clean_action, state, _ = blk[0]
+        blk = [make_block_inputs(*w) for w in wins]
+        print("  블록별 액션 구간: " + " · ".join(
+            "b%d=[%d:%d] |z|max %.2f" % (i + 1, w[0], w[1], blk[i][2]) for i, w in enumerate(wins)))
+        clean_action, state, _ = blk[0]
 
-    ti, tm, ni, nm = ti_c.cuda(), tm_c.cuda(), ni_c.cuda(), nm_c.cuda()
-    emb_pos, emb_neg = cache["pos"], cache["neg"]
-    head.encode_prompt = lambda ids, mask: (emb_pos if ids is ti else emb_neg)
+        ti, tm, ni, nm = ti_c.cuda(), tm_c.cuda(), ni_c.cuda(), nm_c.cuda()
+        emb_pos, emb_neg = cache["pos"], cache["neg"]
+        head.encode_prompt = lambda ids, mask: (emb_pos if ids is ti else emb_neg)
 
-    print("  이미지 %s -> %s · 액션 %s -> %s · |z|max %.2f"
-          % (img.shape, im.shape, acts.shape, tuple(clean_action.shape[1:]), max(b[2] for b in blk)))
+        print("  이미지 %s -> %s · 액션 %s -> %s · |z|max %.2f"
+              % (img.shape, im.shape, acts.shape, tuple(clean_action.shape[1:]), max(b[2] for b in blk)))
 
-    data = BatchFeature(data=dict(
-        images=images, state=state, embodiment_id=torch.zeros(1, dtype=torch.long).cuda(),
-        text=ti, text_attention_mask=tm, text_negative=ni, text_attention_mask_negative=nm))
+        data = BatchFeature(data=dict(
+            images=images, state=state, embodiment_id=torch.zeros(1, dtype=torch.long).cuda(),
+            text=ti, text_attention_mask=tm, text_negative=ni, text_attention_mask_negative=nm))
 
-    if args.steps is not None:
-        head.num_inference_steps = args.steps
-    print("\n=== 3. 생성 (액션 고정, 비디오만 디노이징) · 스텝 %d ==="
-          % head.num_inference_steps)
-    restore = patch_action_forcing(head, clean_action)
-    make_noise = head._make_noise
-    head.current_start_frame = 0
-    head.language = None
-    acc = None            # 누적 latent [b, c, t, h, w]
-    try:
+        if args.steps is not None:
+            head.num_inference_steps = args.steps
+        print("\n=== 3. 생성 (액션 고정, 비디오만 디노이징) · 스텝 %d ==="
+              % head.num_inference_steps)
+        restore = patch_action_forcing(head, clean_action)
+        make_noise = head._make_noise
+        head.current_start_frame = 0
+        head.language = None
+        acc = None            # 누적 latent [b, c, t, h, w]
+        try:
+            with torch.no_grad():
+                for b in range(args.blocks):
+                    t1 = time.time()
+                    # ★블록 체이닝: videos.shape[2] == 1 이면 모델이 "새 시퀀스" 로 보고 KV 캐시를
+                    #   리셋한다. 2번째 블록부터는 2프레임을 넘겨 리셋을 피하고, 누적 latent 를
+                    #   latent_video 로 준다(코드가 [b,c,t,h,w] 를 기대한다 — 전치하면 안 된다).
+                    a_b, s_b, _ = blk[b]
+                    head.generate_noise = make_noise(a_b)      # 이 블록의 액션으로 교체
+                    d = BatchFeature(data={**data, "state": s_b})
+                    if b > 0:
+                        d = BatchFeature(data={**d, "images": images.repeat(1, 2, 1, 1, 1)})
+                    out = head.lazy_joint_video_action(None, d, latent_video=acc)
+                    new_lat = out["video_pred"]                       # [b, c, t, h, w]
+                    acc = new_lat if acc is None else torch.cat([acc, new_lat], dim=2)
+                    torch.cuda.empty_cache()      # 블록마다 KV 캐시가 커진다 — 조각모음
+                    print("  블록 %d/%d · 신규 %s · 누적 %s · start_frame %d · %.1f초 · GPU %.1fGB"
+                          % (b + 1, args.blocks, tuple(new_lat.shape[2:3]), tuple(acc.shape),
+                             head.current_start_frame, time.time() - t1,
+                             torch.cuda.memory_allocated() / 2**30), flush=True)
+        finally:
+            restore()
+
+        print("\n=== 4. 디코딩 ===")
         with torch.no_grad():
-            for b in range(args.blocks):
-                t1 = time.time()
-                # ★블록 체이닝: videos.shape[2] == 1 이면 모델이 "새 시퀀스" 로 보고 KV 캐시를
-                #   리셋한다. 2번째 블록부터는 2프레임을 넘겨 리셋을 피하고, 누적 latent 를
-                #   latent_video 로 준다(코드가 [b,c,t,h,w] 를 기대한다 — 전치하면 안 된다).
-                a_b, s_b, _ = blk[b]
-                head.generate_noise = make_noise(a_b)      # 이 블록의 액션으로 교체
-                d = BatchFeature(data={**data, "state": s_b})
-                if b > 0:
-                    d = BatchFeature(data={**d, "images": images.repeat(1, 2, 1, 1, 1)})
-                out = head.lazy_joint_video_action(None, d, latent_video=acc)
-                new_lat = out["video_pred"]                       # [b, c, t, h, w]
-                acc = new_lat if acc is None else torch.cat([acc, new_lat], dim=2)
-                torch.cuda.empty_cache()      # 블록마다 KV 캐시가 커진다 — 조각모음
-                print("  블록 %d/%d · 신규 %s · 누적 %s · start_frame %d · %.1f초 · GPU %.1fGB"
-                      % (b + 1, args.blocks, tuple(new_lat.shape[2:3]), tuple(acc.shape),
-                         head.current_start_frame, time.time() - t1,
-                         torch.cuda.memory_allocated() / 2**30), flush=True)
-    finally:
-        restore()
+            video = head.vae.decode(acc, tiled=False)
+        v = video[0].float().permute(1, 2, 3, 0).clamp(-1, 1).add(1).mul(127.5).byte().cpu().numpy()
+        print("  프레임 %s -> 대회 규격 16프레임으로 자름" % (v.shape,))
+        v = v[:16]
+        import imageio
+        imageio.mimwrite(out_path, list(v), fps=6, quality=9)
+        print("  -> %s" % out_path)
 
-    print("\n=== 4. 디코딩 ===")
-    with torch.no_grad():
-        video = head.vae.decode(acc, tiled=False)
-    v = video[0].float().permute(1, 2, 3, 0).clamp(-1, 1).add(1).mul(127.5).byte().cpu().numpy()
-    print("  프레임 %s -> 대회 규격 16프레임으로 자름" % (v.shape,))
-    v = v[:16]
-    import imageio
-    imageio.mimwrite(args.out, list(v), fps=6, quality=9)
-    print("  -> %s" % args.out)
+
+
+        print("  [%d/%d] %s · %.1f초 (누적 %.1f분)"
+              % (si, len(names), sample_id, time.time() - t_s, (time.time() - t_all) / 60))
+    print("\n총 %d개 · %.1f분 · 평균 %.1f초/샘플"
+          % (len(names), (time.time() - t_all) / 60, (time.time() - t_all) / len(names)))
 
 
 if __name__ == "__main__":
