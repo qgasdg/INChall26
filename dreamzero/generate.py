@@ -100,7 +100,13 @@ def build_head(root, base, lora, device="cuda", store_dtype="float8_e4m3fn",
         on_head_ready(head)
 
     store_dt = getattr(torch, store_dtype)
-    on_gpu = store_dtype.startswith("float8")     # fp8 이면 GPU 직행, bf16 이면 CPU 에 두고 오프로드
+    # ★VRAM 이 넉넉하면 CPU 를 거치지 않고 바로 GPU 로 올린다. 32GB 장비에서 CPU 를 경유한 건
+    #   bf16 33GB 가 안 들어가서였다. 96GB 면 그럴 이유가 없고, RAM 피크와 시간도 아낀다.
+    free_gb = torch.cuda.get_device_properties(0).total_memory / 2**30
+    need_gb = 16.5 if store_dtype.startswith("float8") else 33.0
+    on_gpu = (max_gpu_params is None) and (free_gb >= need_gb + 12)   # 활성값 12GB 여유
+    print("  VRAM %.0fGB · 가중치 %.0fGB(%s) -> %s"
+          % (free_gb, need_gb, store_dtype, "GPU 직행" if on_gpu else "CPU 경유 + 오프로드"))
     print("  DiT 스트리밍 적재 (%s, %s)…" % (store_dtype, "GPU 직행" if on_gpu else "CPU 후 부분 오프로드"),
           flush=True)
     # ★CPU 에 33GB 를 모으면 헤드가 든 T5(11GB)+CLIP(4.5GB) 와 합쳐 62GB RAM 을 넘긴다.
@@ -258,8 +264,9 @@ def main() -> None:
     ap.add_argument("--t5-dtype", default="keep", choices=("keep", "bfloat16", "float16"),
                     help="가설 검증용. keep=로드된 정밀도(fp32) 유지. bf16 으로 낮추면 "
                          "프롬프트 임베딩이 흐려져 생성이 무너지는지 본다")
-    ap.add_argument("--store-dtype", default="float8_e4m3fn",
-                    help="가중치 저장 dtype. bfloat16 이면 33GB 라 CPU 오프로드가 필요하다")
+    ap.add_argument("--store-dtype", default="bfloat16",
+                    help="가중치 저장 dtype. 96GB GPU 에선 bf16 33GB 가 통째로 올라간다. "
+                         "fp8 은 32GB 장비 회피책이므로 여기선 기본이 아니다")
     ap.add_argument("--max-gpu-params", type=float, default=None,
                     help="GPU 에 둘 최대 파라미터 수. bf16 이면 10e9 (=20GB) 정도")
     ap.add_argument("--steps", type=int, default=None,
