@@ -277,6 +277,15 @@ def main() -> None:
 
     sys.path.insert(0, args.root)
     import torch
+    # ★결정론 고정. 이걸 안 하면 같은 설정으로 두 번 돌려도 생성 프레임이 픽셀 10.47 만큼
+    #   달라진다(Pro 6000 실측). 그 크기가 fp8 vs bf16 차이(6.29)보다 커서 A/B 비교가
+    #   전부 무의미해진다. generate_noise 는 이미 시드가 걸려 있고, 새는 곳은 전역 RNG 다
+    #   (VAE posterior sample() 이 유력). 고정 후 반복 차이 0.000.
+    import random as _random, os as _os
+    _os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    _random.seed(0); np.random.seed(0); torch.manual_seed(0); torch.cuda.manual_seed_all(0)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
     # 스케줄러의 multistep_uni_p_bh_update 가 step_index 마다 재컴파일된다. 추론 스텝이
     # 16 이라 기본 한도 8 을 넘겨 죽는다 — 한도를 올린다.
     torch._dynamo.config.recompile_limit = 128
