@@ -184,9 +184,11 @@ def main() -> None:
     ap.add_argument("--lora", required=True)
     ap.add_argument("--eval-dir", required=True)
     ap.add_argument("--sample", default="sample_000000")
+    ap.add_argument("--action-mode", default="true", choices=("true","zero","half"),
+                    help="진단용. zero=움직임 없음, half=크기 절반(fps 가설 검증)")
     ap.add_argument("--out", default="out.mp4")
     ap.add_argument("--prompt", default="a robot arm manipulating an object on a table")
-    ap.add_argument("--blocks", type=int, default=4, help="생성할 블록 수 (블록당 latent 2프레임)")
+    ap.add_argument("--blocks", type=int, default=2, help="블록 수. 1블록=latent 3, 이후 +2. latent L -> 영상 (L-1)*4+1 프레임. 2블록이면 17프레임으로 대회 16프레임을 덮는다")
     args = ap.parse_args()
 
     sys.path.insert(0, args.root)
@@ -217,6 +219,10 @@ def main() -> None:
     norm = (rel24 - ACTION_MEAN) / ACTION_STD
     a_pad = np.zeros((head.action_horizon, head.model.action_dim), dtype=np.float32)
     a_pad[:, :6] = norm
+    if args.action_mode == "zero":
+        a_pad[:] = 0.0                       # 상대 이동 0 = 정지 요구
+    elif args.action_mode == "half":
+        a_pad[:, :6] *= 0.5                  # 학습 분포 쪽으로 절반만
     clean_action = torch.from_numpy(a_pad)[None].cuda().to(torch.bfloat16)
 
     s_pad = np.zeros((1, 64), dtype=np.float32)
@@ -253,23 +259,34 @@ def main() -> None:
     restore = patch_action_forcing(head, clean_action)
     head.current_start_frame = 0
     head.language = None
-    lat = None
+    acc = None            # 누적 latent [b, c, t, h, w]
     try:
         with torch.no_grad():
             for b in range(args.blocks):
                 t1 = time.time()
-                out = head.lazy_joint_video_action(None, data, latent_video=lat)
-                lat = out["video_pred"].transpose(1, 2)
-                print("  블록 %d/%d · latent %s · %.1f초"
-                      % (b + 1, args.blocks, tuple(lat.shape), time.time() - t1), flush=True)
+                # ★블록 체이닝: videos.shape[2] == 1 이면 모델이 "새 시퀀스" 로 보고 KV 캐시를
+                #   리셋한다. 2번째 블록부터는 2프레임을 넘겨 리셋을 피하고, 누적 latent 를
+                #   latent_video 로 준다(코드가 [b,c,t,h,w] 를 기대한다 — 전치하면 안 된다).
+                d = data
+                if b > 0:
+                    d = BatchFeature(data={**data, "images": images.repeat(1, 2, 1, 1, 1)})
+                out = head.lazy_joint_video_action(None, d, latent_video=acc)
+                new_lat = out["video_pred"]                       # [b, c, t, h, w]
+                acc = new_lat if acc is None else torch.cat([acc, new_lat], dim=2)
+                torch.cuda.empty_cache()      # 블록마다 KV 캐시가 커진다 — 조각모음
+                print("  블록 %d/%d · 신규 %s · 누적 %s · start_frame %d · %.1f초 · GPU %.1fGB"
+                      % (b + 1, args.blocks, tuple(new_lat.shape[2:3]), tuple(acc.shape),
+                         head.current_start_frame, time.time() - t1,
+                         torch.cuda.memory_allocated() / 2**30), flush=True)
     finally:
         restore()
 
     print("\n=== 4. 디코딩 ===")
     with torch.no_grad():
-        video = head.vae.decode(lat.transpose(1, 2), tiled=False)
+        video = head.vae.decode(acc, tiled=False)
     v = video[0].float().permute(1, 2, 3, 0).clamp(-1, 1).add(1).mul(127.5).byte().cpu().numpy()
-    print("  프레임 %s" % (v.shape,))
+    print("  프레임 %s -> 대회 규격 16프레임으로 자름" % (v.shape,))
+    v = v[:16]
     import imageio
     imageio.mimwrite(args.out, list(v), fps=6, quality=9)
     print("  -> %s" % args.out)
