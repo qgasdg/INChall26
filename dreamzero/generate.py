@@ -39,6 +39,24 @@ def resample(a: np.ndarray, n: int) -> np.ndarray:
     return np.stack([np.interp(t_new, t_old, a[:, i]) for i in range(a.shape[1])], axis=1)
 
 
+def block_windows(n_act: int, n_blocks: int, first_frames: int = 9, step_frames: int = 8):
+    """블록 b 가 담당하는 액션 인덱스 구간 [i0, i1] 를 준다.
+
+    블록 1 은 조건 프레임 포함 9프레임, 이후 블록은 8프레임씩 만든다. 우리 16프레임을
+    그 비율로 나눠 각 블록에 자기 구간만 준다. 전 구간을 매 블록에 주면(이전 방식)
+    블록마다 2.5초치 움직임을 요구받아 학습 분포(0.8초)에서 크게 벗어난다.
+    """
+    total = first_frames + step_frames * (n_blocks - 1)
+    bounds, cur = [], 0
+    for b in range(n_blocks):
+        f = first_frames if b == 0 else step_frames
+        i0 = int(round(cur / total * (n_act - 1)))
+        cur += f
+        i1 = int(round(min(cur, total) / total * (n_act - 1)))
+        bounds.append((i0, max(i1, i0 + 1)))
+    return bounds
+
+
 def build_head(root, base, lora, device="cuda", store_dtype="float8_e4m3fn",
                max_gpu_params=None, on_head_ready=None):
     """WANPolicyHead 를 세우되 DiT 는 meta 로 만들고 나중에 스트리밍으로 채운다."""
@@ -191,12 +209,15 @@ def patch_action_forcing(head, clean_action):
 
     orig_noise = head.generate_noise
 
-    def noise(shape, *a, **k):
-        if len(shape) == 3 and shape[1] == head.action_horizon:
-            return clean_action.clone()                       # ← 노이즈 대신 정답 액션
-        return orig_noise(shape, *a, **k)
+    def make_noise(act):
+        def noise(shape, *a, **k):
+            if len(shape) == 3 and shape[1] == head.action_horizon:
+                return act.clone()                            # ← 노이즈 대신 정답 액션
+            return orig_noise(shape, *a, **k)
+        return noise
 
-    head.generate_noise = noise
+    head.generate_noise = make_noise(clean_action)
+    head._make_noise = make_noise
 
     OrigSched = WM.FlowUniPCMultistepScheduler
     state = {"n": 0}
@@ -234,6 +255,9 @@ def main() -> None:
                          "학습 분포 밖이라 상태 인코더를 오염시키는지 본다")
     ap.add_argument("--out", default="out.mp4")
     ap.add_argument("--prompt", default="a robot arm manipulating an object on a table")
+    ap.add_argument("--t5-dtype", default="keep", choices=("keep", "bfloat16", "float16"),
+                    help="가설 검증용. keep=로드된 정밀도(fp32) 유지. bf16 으로 낮추면 "
+                         "프롬프트 임베딩이 흐려져 생성이 무너지는지 본다")
     ap.add_argument("--store-dtype", default="float8_e4m3fn",
                     help="가중치 저장 dtype. bfloat16 이면 33GB 라 CPU 오프로드가 필요하다")
     ap.add_argument("--max-gpu-params", type=float, default=None,
@@ -266,6 +290,10 @@ def main() -> None:
 
     def prep_text(head):
         """T5 를 DiT 적재 전에 쓰고 해제한다 — bf16 모드에서 RAM 을 아끼려면 순서가 중요하다."""
+        if args.t5_dtype != "keep":
+            head.text_encoder = head.text_encoder.to(dtype=getattr(torch, args.t5_dtype))
+        pd = next(head.text_encoder.parameters()).dtype
+        print("  T5 계산 dtype: %s" % pd, flush=True)
         with torch.no_grad():
             cache["pos"] = head.encode_prompt(ti_c, tm_c).cuda()
             cache["neg"] = head.encode_prompt(ni_c, nm_c).cuda()
@@ -286,32 +314,38 @@ def main() -> None:
     images = torch.from_numpy(im.copy())[None, None].cuda()            # b t h w c (uint8)
 
     acts = np.load(EV / "actions" / (args.sample + ".npy")).astype(np.float64)
-    anchor = acts[0]
-    rel = acts - anchor[None, :]
-    rel24 = resample(rel, head.action_horizon)                          # 16 -> 24 스텝
-    norm = (rel24 - ACTION_MEAN) / ACTION_STD
-    a_pad = np.zeros((head.action_horizon, head.model.action_dim), dtype=np.float32)
-    a_pad[:, :6] = norm
-    if args.action_mode == "zero":
-        a_pad[:] = 0.0                       # 상대 이동 0 = 정지 요구
-    elif args.action_mode == "half":
-        a_pad[:, :6] *= 0.5                  # 학습 분포 쪽으로 절반만
-    clean_action = torch.from_numpy(a_pad)[None].cuda().to(torch.bfloat16)
+    wins = block_windows(len(acts), args.blocks)
 
-    s_pad = np.zeros((1, 64), dtype=np.float32)
-    if args.state_mode == "true":
-        s_pad[0, :6] = (anchor - STATE_MEAN) / STATE_STD
-    elif args.state_mode == "mean":
-        s_pad[0, :6] = 0.0     # 정규화 공간에서 0 = 학습 평균 자세
-    # zero 는 그대로 0 (mean 과 같지만 의미를 구분해 남긴다)
-    state = torch.from_numpy(s_pad)[None].cuda().to(torch.bfloat16)
+    def make_block_inputs(i0, i1):
+        """블록 구간 [i0,i1] 의 액션을 그 구간 시작 자세 기준 상대값으로."""
+        anchor_b = acts[i0]
+        rel_b = acts[i0:i1 + 1] - anchor_b[None, :]
+        if args.action_mode == "zero":
+            rel_b = np.zeros_like(rel_b)
+        elif args.action_mode == "half":
+            rel_b = rel_b * 0.5
+        r24 = resample(rel_b, head.action_horizon)
+        nrm = (r24 - ACTION_MEAN) / ACTION_STD
+        ap_ = np.zeros((head.action_horizon, head.model.action_dim), dtype=np.float32)
+        ap_[:, :6] = nrm
+        sp_ = np.zeros((1, 64), dtype=np.float32)
+        if args.state_mode == "true":
+            sp_[0, :6] = (anchor_b - STATE_MEAN) / STATE_STD
+        return (torch.from_numpy(ap_)[None].cuda().to(torch.bfloat16),
+                torch.from_numpy(sp_)[None].cuda().to(torch.bfloat16),
+                float(np.abs(nrm).max()))
+
+    blk = [make_block_inputs(*w) for w in wins]
+    print("  블록별 액션 구간: " + " · ".join(
+        "b%d=[%d:%d] |z|max %.2f" % (i + 1, w[0], w[1], blk[i][2]) for i, w in enumerate(wins)))
+    clean_action, state, _ = blk[0]
 
     ti, tm, ni, nm = ti_c.cuda(), tm_c.cuda(), ni_c.cuda(), nm_c.cuda()
     emb_pos, emb_neg = cache["pos"], cache["neg"]
     head.encode_prompt = lambda ids, mask: (emb_pos if ids is ti else emb_neg)
 
     print("  이미지 %s -> %s · 액션 %s -> %s · |z|max %.2f"
-          % (img.shape, im.shape, acts.shape, tuple(clean_action.shape[1:]), np.abs(norm).max()))
+          % (img.shape, im.shape, acts.shape, tuple(clean_action.shape[1:]), max(b[2] for b in blk)))
 
     data = BatchFeature(data=dict(
         images=images, state=state, embodiment_id=torch.zeros(1, dtype=torch.long).cuda(),
@@ -322,6 +356,7 @@ def main() -> None:
     print("\n=== 3. 생성 (액션 고정, 비디오만 디노이징) · 스텝 %d ==="
           % head.num_inference_steps)
     restore = patch_action_forcing(head, clean_action)
+    make_noise = head._make_noise
     head.current_start_frame = 0
     head.language = None
     acc = None            # 누적 latent [b, c, t, h, w]
@@ -332,9 +367,11 @@ def main() -> None:
                 # ★블록 체이닝: videos.shape[2] == 1 이면 모델이 "새 시퀀스" 로 보고 KV 캐시를
                 #   리셋한다. 2번째 블록부터는 2프레임을 넘겨 리셋을 피하고, 누적 latent 를
                 #   latent_video 로 준다(코드가 [b,c,t,h,w] 를 기대한다 — 전치하면 안 된다).
-                d = data
+                a_b, s_b, _ = blk[b]
+                head.generate_noise = make_noise(a_b)      # 이 블록의 액션으로 교체
+                d = BatchFeature(data={**data, "state": s_b})
                 if b > 0:
-                    d = BatchFeature(data={**data, "images": images.repeat(1, 2, 1, 1, 1)})
+                    d = BatchFeature(data={**d, "images": images.repeat(1, 2, 1, 1, 1)})
                 out = head.lazy_joint_video_action(None, d, latent_video=acc)
                 new_lat = out["video_pred"]                       # [b, c, t, h, w]
                 acc = new_lat if acc is None else torch.cat([acc, new_lat], dim=2)
