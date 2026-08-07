@@ -8,7 +8,7 @@
 #   ② add_act_time_emb: True — 없으면 time_embed.2 가 shape 불일치로 랜덤 초기화된다.
 #   그리고 only_reload_modules 에 "model"(UNet)을 넣어야 백본이 실제로 실린다.
 
-name: ft-10-actiononly
+name: ft-11-contrastive
 group: ft
 logdir: /home/sun4208/ft/outputs
 
@@ -39,9 +39,11 @@ model:
     ["model", "first_stage_model", "cond_stage_model", "embedder", "image_proj_model"]
   base_learning_rate: 1e-4   # action_embed 전용 — 신규 모듈이라 백본 lr(1e-5)보다 높게 간다
   scale_lr: False
-  target: ft_loss.ActionOnlyDiffusion
+  target: ft_loss.ActionContrastiveDiffusion
   params:
     save_only_unet: True
+    contrast_weight: 1.0         # 액션 대조 항 가중치
+    contrast_margin: 0.05        # 정답 액션이 틀린 액션보다 상대 5% 이상 유리해야 한다
     linear_warmup_steps: 50      # 600스텝 학습이라 250 은 42%가 워밍업이 된다
     rescale_betas_zero_snr: True
     parameterization: "v"
@@ -173,7 +175,7 @@ lightning:
       target: pytorch_lightning.loggers.CSVLogger
       params:
         save_dir: ../outputs/logs/
-        name: ft-10-actiononly
+        name: ft-11-contrastive
   callbacks:
     model_checkpoint:
       target: pytorch_lightning.callbacks.ModelCheckpoint

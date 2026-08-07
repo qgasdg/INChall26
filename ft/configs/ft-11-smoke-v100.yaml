@@ -8,19 +8,19 @@
 #   ② add_act_time_emb: True — 없으면 time_embed.2 가 shape 불일치로 랜덤 초기화된다.
 #   그리고 only_reload_modules 에 "model"(UNet)을 넣어야 백본이 실제로 실린다.
 
-name: ft-10-actiononly
+name: ft-11-contrastive
 group: ft
-logdir: /home/sun4208/ft/outputs
+logdir: /home/jovyan/work/ft/outputs
 
 data:
   target: ft_data.SO100Act12DataModule
   params:
-    root: /home/sun4208/ft/data/train
+    root: /home/jovyan/work/INChall26/open/data/train
     remote: False
     dataset_paths: auto
-    action_stats_path: /home/sun4208/ft/data/train/so100_action_statistics.json
+    action_stats_path: /home/jovyan/work/INChall26/open/data/train/so100_action_statistics.json
     normalize_actions: True
-    delta_stats_path: /home/sun4208/ft/data/train/so100_delta_statistics.json
+    delta_stats_path: /home/jovyan/work/INChall26/open/data/train/so100_delta_statistics.json
     batch_size: 1
     num_workers: 2
     pin_memory: True
@@ -34,14 +34,16 @@ data:
     use_language: False
 
 model:
-  pretrained_checkpoint: /home/sun4208/ft/checkpoints/backbone.ckpt
+  pretrained_checkpoint: /home/jovyan/work/INChall26/open/baseline/checkpoints/backbone.ckpt
   only_reload_modules:
     ["model", "first_stage_model", "cond_stage_model", "embedder", "image_proj_model"]
   base_learning_rate: 1e-4   # action_embed 전용 — 신규 모듈이라 백본 lr(1e-5)보다 높게 간다
   scale_lr: False
-  target: ft_loss.ActionOnlyDiffusion
+  target: ft_loss.ActionContrastiveDiffusion
   params:
     save_only_unet: True
+    contrast_weight: 1.0         # 액션 대조 항 가중치
+    contrast_margin: 0.05        # 정답 액션이 틀린 액션보다 상대적으로 5% 이상 유리해야 한다
     linear_warmup_steps: 50      # 600스텝 학습이라 250 은 42%가 워밍업이 된다
     rescale_betas_zero_snr: True
     parameterization: "v"
@@ -154,18 +156,18 @@ model:
         video_length: 16
 
 lightning:
-  precision: bf16                  # 5090 은 지원. V100 은 sm_70 이라 16(fp16) 으로 바꿔야 한다
+  precision: 16
   trainer:
     strategy: ddp
     accelerator: "gpu"
     limit_train_batches: 1.0
-    limit_val_batches: 2
+    limit_val_batches: 0
     check_val_every_n_epoch: 2
     num_sanity_val_steps: 0
     num_nodes: 1
     benchmark: True
-    accumulate_grad_batches: 16    # 유효 배치 16 (batch 1 x 16)
-    max_steps: 600
+    accumulate_grad_batches: 1
+    max_steps: 4
     log_every_n_steps: 10
     gradient_clip_algorithm: "norm"
     gradient_clip_val: 1.0
@@ -173,8 +175,12 @@ lightning:
       target: pytorch_lightning.loggers.CSVLogger
       params:
         save_dir: ../outputs/logs/
-        name: ft-10-actiononly
+        name: ft-11-contrastive
   callbacks:
+    freeze_except_action:
+      target: ft_freeze.FreezeExceptAction
+      params:
+        patterns: ["action_embed"]
     model_checkpoint:
       target: pytorch_lightning.callbacks.ModelCheckpoint
       params:
