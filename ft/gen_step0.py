@@ -19,10 +19,11 @@ os.environ.setdefault("USE_TF", "0")
 os.environ.setdefault("TRANSFORMERS_NO_TF", "1")
 os.environ.setdefault("USE_FLAX", "0")
 
-KIT = Path(os.path.expanduser("~/ft/kit/baseline/challenge_kit"))
+BASELINE = Path(os.environ.get("FT_BASELINE", os.path.expanduser("~/ft/kit/baseline")))
+KIT = BASELINE / "challenge_kit"
 sys.path.insert(0, str(KIT / "libs/dynamicrafter"))
 sys.path.insert(0, str(KIT / "src"))
-sys.path.insert(0, str(Path(os.path.expanduser("~/ft/kit/baseline/shared_libs/video_utils"))))
+sys.path.insert(0, str(BASELINE / "shared_libs/video_utils"))
 sys.path.insert(0, str(KIT))
 
 import numpy as np  # noqa: E402
@@ -72,6 +73,7 @@ def main() -> None:
     p.add_argument("--action-stats-path",
                    default=os.path.expanduser("~/ft/data/train/so100_action_statistics.json"))
     p.add_argument("--out", default=os.path.expanduser("~/ft/out/ft-00"))
+    p.add_argument("--start", type=int, default=0)
     p.add_argument("--limit", type=int, default=4)
     p.add_argument("--ddim-steps", type=int, default=None)
     p.add_argument("--fps", type=int, default=6)
@@ -120,12 +122,17 @@ def main() -> None:
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    sample_ids = list_challenge_sample_ids(Path(args.challenge_root))[: args.limit]
+    sample_ids = list_challenge_sample_ids(Path(args.challenge_root))[args.start : args.start + args.limit]
     print(f">>> 샘플 {len(sample_ids)}개: {sample_ids}")
 
     amp = torch.cuda.amp.autocast() if args.precision == 16 and device.type == "cuda" else nullcontext()
     tp = cfg.data.params
+    import time
+    t_start = time.time()
     for i, sid in enumerate(sample_ids, 1):
+        if (out / f"{sid}.mp4").exists():
+            continue
+        t0 = time.time()
         batch = build_inference_batch(
             Path(args.challenge_root), [sid],
             tp.target_height, tp.target_width, tp.pad, args.fps,
@@ -146,7 +153,8 @@ def main() -> None:
             gen = model.decode_first_stage(samples)
         save_video_tensor(gen[0], out / f"{sid}.mp4", args.fps)
         save_grid(gen[0], out / f"{sid}.png")
-        print(f"[{i}/{len(sample_ids)}] {sid} 완료")
+        el = time.time() - t0
+        print(f"[{i}/{len(sample_ids)}] {sid} · {el:.1f}초 (누적 {(time.time()-t_start)/60:.1f}분)", flush=True)
 
     print(f">>> 저장 위치: {out}")
 
