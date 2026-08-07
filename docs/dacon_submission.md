@@ -15,9 +15,10 @@
 | 5 | 0.3467 | `ck1250_submission.csv` (8/6 12:36) | 태양 | 균등 loss 1,250스텝 · motion_area 0.272 |
 | 6 | 0.3762 | `v2_500_submission.csv` (8/6 20:17) | 태양 | motion-weighted loss + 액션 lr 10배 · motion_area 0.338 |
 | 7 | **0.3729** | `submission_ft01_act12_step0.csv` (8/7 22:50) | 윤택 | **1.4B 백본 정상 적재(96.8%) 0스텝 + 액션 12차원** · 코드 `09e75e5` |
-| 8 | 0.3957 | `step0_rff_submission.csv` (8/6 01:02) | 태양 | step0 + replace-first-frame |
-| 9 | **0.4668** | `submission_dreamzero.csv` (8/7 03:12) | 윤택 | **DreamZero-SO101 LoRA 제로샷** |
-| 10 | 0.5166 | `baseline_submission.csv` (8/4 23:56) | 태양 | 대회 제공 11M UNet, scratch 학습 |
+| 8 | **0.3948** | `submission_ft05_parity.csv` (8/8) | 윤택 | ft-01 + zero-init 액션 · `fs_condition` true · `ddim_eta` 0 · `guidance_rescale` 제거 · DDIM 15 |
+| 9 | 0.3957 | `step0_rff_submission.csv` (8/6 01:02) | 태양 | step0 + replace-first-frame |
+| 10 | **0.4668** | `submission_dreamzero.csv` (8/7 03:12) | 윤택 | **DreamZero-SO101 LoRA 제로샷** |
+| 11 | 0.5166 | `baseline_submission.csv` (8/4 23:56) | 태양 | 대회 제공 11M UNet, scratch 학습 |
 
 참고 — 초기화 전 기록: 정적 0.3028(7/18), IRASim FT 0.3794(7/27).
 현 리더보드: 1위 0.171 · 10위 0.248.
