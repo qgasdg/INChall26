@@ -80,6 +80,8 @@ def main() -> None:
     p.add_argument("--precision", type=int, default=16)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--action-dims", type=int, default=6, help="12 이면 절대6 + Δ6")
+    p.add_argument("--action-ckpt", default=None,
+                   help="extract_action_ckpt.py 로 뽑은 액션 가중치(.pt). 주면 zero-init 대신 이걸 싣는다")
     p.add_argument("--no-ema", action="store_true",
                    help="EMA 비활성화 — 0스텝에서는 EMA 가 사전학습 이전의 랜덤 가중치를 들고 있다")
     p.add_argument("--zero-init-action", action="store_true",
@@ -97,7 +99,16 @@ def main() -> None:
         print(">>> use_ema=False — 로드된 가중치를 그대로 쓴다")
     print(">>> 모델 구성 중 (backbone 적재)")
     model = get_model(cfg.model)
-    if args.zero_init_action:
+    if args.action_ckpt:
+        act_sd = torch.load(args.action_ckpt, map_location="cpu")
+        missing, unexpected = model.load_state_dict(act_sd, strict=False)
+        loaded = [k for k in act_sd if k not in unexpected]
+        if len(loaded) != len(act_sd):
+            raise SystemExit(f"액션 가중치 적재 실패 — 안 실린 키: {unexpected}")
+        print(f">>> 액션 가중치 {len(loaded)}개 적재: {args.action_ckpt}")
+        for k, v in act_sd.items():
+            print(f"      {k}  |w| 평균 {v.float().abs().mean():.3e}")
+    elif args.zero_init_action:
         ae = model.model.diffusion_model.action_embed
         last = [m for m in ae if isinstance(m, torch.nn.Linear)][-1]
         torch.nn.init.zeros_(last.weight); torch.nn.init.zeros_(last.bias)
