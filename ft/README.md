@@ -38,7 +38,7 @@
 |---|---|---|---|---|
 | A | `base_learning_rate` | `1e-4` | **11M을 맨땅에서 학습시키려고 잡은 값이다.** 1.4B 사전학습 UNet을 이 lr로 미세조정하면 사전학습 지식이 초반에 날아간다(catastrophic forgetting). "0스텝이 최고"와 정확히 일치하는 증상 | ★★★ |
 | B | `add_act_time_emb` | 없음 → **False** | False면 `time_embed` 출력이 절반(`embed_dim//2`)으로 줄고 거기에 액션을 **이어붙인다**(concat). 사전학습 ResBlock이 기대하는 emb 의미와 어긋난다. True면 같은 차원으로 **더한다**(addition) → 사전학습 호환. `openaimodel3d.py:419-434, 744-747` | ★★★ |
-| C | 액션 표현 | **절대 관절값**, 전역 z정규화 | `lerobot_so100.py:388-396`. 16프레임 창 안에서 절대값은 거의 안 변한다 → 정규화하면 "지금 어느 자세대"만 남고 **"어떻게 움직이는지"는 신호가 거의 없다.** 셔플 액션이 정답 액션보다 나았던 관측과 맞물린다 | ★★★ |
+| C | 액션 표현 | **절대 관절값**, 전역 z정규화 | `lerobot_so100.py:388-396`. 창 안에서도 팔은 꽤 움직인다(창내 std가 전역의 32.6%). 문제는 비율이다 — **모델이 받는 값 변동의 약 88%가 "어느 자세대인가"고 "이 창 안에서 무슨 일이 일어나는가"는 12%뿐**이며, 프레임 간 변화량은 0.079로 값 크기의 8% 수준이다. 손실을 줄이는 쉬운 길은 큰 성분(자세대→화면 배치)이라 움직임 성분은 gradient 를 거의 못 받는다. 셔플 액션이 정답보다 나았던 관측과 맞물린다 (`ft/probe_action_signal` 실측) | ★★★ |
 | D | 유효 배치 | `batch_size 1` × `accumulate 2` = **2** | 1.4B 모델을 배치 2로 미세조정하면 gradient가 극도로 시끄럽다. A와 겹쳐 작용하면 파괴적 | ★★ |
 | E | `action_dropout_prob` | `0.0` | 학습 때 액션을 안 지우면 추론에서 **액션 CFG**(액션을 준 예측과 안 준 예측을 비교해 액션 효과를 증폭하는 기법)를 못 쓴다. eval config도 `unconditional_guidance_scale: 1.0`(꺼짐) | ★★ |
 | F | `precision: 16` | fp16 | `parameterization: "v"` + `rescale_betas_zero_snr` 조합에서 fp16은 불안정하기로 알려져 있다. bf16이 가능한 장비면 바꿀 값 | ★★ |
@@ -50,6 +50,30 @@
 
 - `only_reload_modules`에 `model`(UNet)이 빠져 있어 backbone.ckpt의 1.44B UNet을 안 쓰고
   32채널 11M을 맨땅에서 학습하던 문제 → 태양님이 해결. `0.5166 → 0.3031`.
+
+## 백본을 제대로 싣기까지 고친 것 (2026-08-07)
+
+대회 config 그대로는 **1,107개 텐서 중 1개**만 실린다. 아래를 다 맞춰야 1.4B 가 온전히 올라간다.
+전부 `backbone.ckpt`(= HF `Doubiiu/DynamiCrafter_512` 의 `model.ckpt`) 실측 shape 으로 확정했다
+(`probe_backbone.py`, `probe_load.py`).
+
+| 항목 | 대회 원본 | 실측 | 안 고치면 |
+|---|---|---|---|
+| `model_channels` | 32 | **320** | 구조 자체가 다름 |
+| `channel_mult` | [1,2,3] | **[1,2,4,4]** | 〃 |
+| `num_head_channels` | 16 | **64** | 〃 |
+| `attention_resolutions` | [4,2] | **[4,2,1]** | 〃 |
+| `use_scale_shift_norm` | True | **False** | ResBlock `emb_layers` 가 정확히 2배 어긋나 적재 자체가 예외로 죽는다 |
+| `add_act_time_emb` | 없음(=False) | **True** | `time_embed.2` 가 shape 불일치로 랜덤 초기화 |
+| `only_reload_modules` | UNet 제외 | **UNet 포함** | 백본이 아예 안 실림 |
+
+**★`use_ema: True` — 0스텝 생성에서 치명적.**
+`LitEma` 는 모델을 만드는 시점의 가중치를 복사해두는데 그 시점은 **사전학습을 싣기 전**이고,
+`backbone.ckpt` 에는 `model_ema.*` 가 없어 갱신되지도 않는다. 그래서 `ema_scope()` 안에서
+생성하면 **랜덤 가중치로 생성한다.** 실제로 전 프레임이 컬러 노이즈로 나왔고, 끄자 정상 영상이 나왔다.
+학습된 체크포인트에는 EMA 가 저장되므로 학습 후 추론에서는 드러나지 않는다 — 0스텝에서만 터진다.
+
+`action_embed` 를 0으로 초기화해도 노이즈는 그대로였다 → **액션 임베딩은 원인이 아니었다.**
 
 ## 실험 표
 
