@@ -43,9 +43,11 @@ class ActionResidualDiffusion(LatentVisualDiffusion):
     def __init__(self, *args,
                  train_patterns=("action_embed", "diffusion_model.out."),
                  freeze_backbone: bool = True,
+                 temporal_diff_loss: bool = False,
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.train_patterns = tuple(train_patterns)
+        self.temporal_diff_loss = temporal_diff_loss
         if freeze_backbone:
             self._freeze()
         # ★ zero-init 은 여기서 하면 안 된다 — get_model 이 이 뒤에 backbone.ckpt 를 실으면서
@@ -115,24 +117,49 @@ class ActionResidualDiffusion(LatentVisualDiffusion):
 
     # ── 손실 ──────────────────────────────────────────────────────────────
     def p_losses(self, x_start, cond, t, noise=None, **kwargs):
-        """확산 손실이 아니라 잔차 회귀 손실. t·noise 는 쓰지 않는다."""
+        """확산 손실이 아니라 잔차 회귀 손실. t·noise 는 쓰지 않는다.
+
+        temporal_diff_loss=True 면 **시간 차분**에 손실을 건다.
+
+        왜: 목표 `Δ = z_정답 − z_정적` 의 시간 평균은 0 이 아니다(조명·모션블러·팔의 평균 위치).
+        그래서 **시간에 대해 상수인 값 하나만 맞혀도 MSE 가 10% 준다.** ft-20 600스텝이
+        정확히 그렇게 됐다 — 전역 오프셋 3.2/255 vs 프레임 간 변화 0.8/255 로,
+        Δ 의 대부분이 "영상 전체를 살짝 미는 것"이었고 팔은 안 움직였다.
+        차분을 쓰면 상수 성분이 소거되므로 **오프셋으로는 손실을 1도 못 줄인다.**
+        점수를 따려면 실제로 프레임이 달라져야 한다.
+        """
         z_static = static_latent(x_start)
         target = x_start - z_static                      # 배경은 거의 0
         delta = self.predict_residual(z_static, cond, **kwargs)
 
-        loss_flat = self.get_loss(delta, target, mean=False).mean([1, 2, 3, 4])
+        if self.temporal_diff_loss:
+            # 시간 차분: [b,c,t,h,w] → [b,c,t-1,h,w]. 상수 성분은 여기서 사라진다
+            d_pred = delta[:, :, 1:] - delta[:, :, :-1]
+            d_true = target[:, :, 1:] - target[:, :, :-1]
+            loss_flat = self.get_loss(d_pred, d_true, mean=False).mean([1, 2, 3, 4])
+            static_ref = d_true.pow(2).mean([1, 2, 3, 4])      # 정적(=차분 0)일 때의 오차
+        else:
+            loss_flat = self.get_loss(delta, target, mean=False).mean([1, 2, 3, 4])
+            static_ref = target.pow(2).mean([1, 2, 3, 4])
+
         loss = loss_flat.mean()
 
         prefix = "train" if self.training else "val"
         with torch.no_grad():
-            # 정적을 그대로 낼 때의 오차 = 목표의 크기. loss 가 이보다 작아야 이득이다.
-            static_err = target.pow(2).mean([1, 2, 3, 4]).mean()
+            static_err = static_ref.mean()
             rel = loss / (static_err + 1e-8)
+            # Δ 를 시간 상수 성분과 변동 성분으로 쪼개 본다 — 착시를 막는 진단값
+            const_part = delta.mean(dim=2, keepdim=True)
+            vary_part = delta - const_part
+            const_rms = const_part.pow(2).mean().sqrt()
+            vary_rms = vary_part.pow(2).mean().sqrt()
         loss_dict = {
             f"{prefix}/loss": loss,
             f"{prefix}/loss_simple": loss,
             f"{prefix}/static_err": static_err,     # 정적 기준선
             f"{prefix}/rel_to_static": rel,         # ★ <1 이면 정적보다 낫다
             f"{prefix}/delta_rms": delta.pow(2).mean().sqrt(),
+            f"{prefix}/delta_const_rms": const_rms,  # 시간 상수 성분 (오프셋)
+            f"{prefix}/delta_vary_rms": vary_rms,    # ★ 시간 변동 성분 = 진짜 움직임
         }
         return loss, loss_dict, {}
