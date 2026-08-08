@@ -269,6 +269,21 @@ ft-20 에서 정적에 미달했던 0.038 의 정체가 대부분 이것이었�
   동결이 실제로 지켜졌는지 검증한다 (11개 전부 통과).
 - ft-11 은 600스텝을 다 채우고 **마지막 체크포인트 저장에서 디스크가 차 죽었다.** 500스텝판이 최종본이다.
 
+## 학습 데이터에서 제외한 것
+
+카메라가 팔에 붙어 있어 **팔이 움직이면 화면 전체가 쓸려가는** 데이터셋 5개를 뺐다(육안 확인).
+대회 eval 은 고정 부감(`observation.images.top`)이라 성격이 다르다.
+
+```
+Chojins/chess_game_000_white_red
+Chojins/chess_game_001_blue_stereo
+Chojins/chess_game_001_red_stereo
+Chojins/chess_game_009_white
+lirislab/guess_who_so100
+```
+
+`ft_data.MOVING_CAMERA_DATASETS` 에 있고 `exclude_moving_camera=True`(기본)면 자동으로 빠진다.
+
 ## 실행
 
 ```bash

@@ -17,7 +17,18 @@ from pathlib import Path
 import torch
 from torch.utils.data import Dataset
 
+from ldwma.datasets.lerobot_so100 import discover_lerobot_so100_datasets
 from ldwma.lightning.data_modules.lerobot_so100 import SO100DataModule
+
+# 카메라가 팔에 붙어 있어 팔이 움직이면 화면 전체가 쓸려가는 데이터셋 (육안 확인).
+# 대회 eval 은 고정 부감(`observation.images.top`)이라 성격이 다르다.
+MOVING_CAMERA_DATASETS = (
+    "Chojins/chess_game_000_white_red",
+    "Chojins/chess_game_001_blue_stereo",
+    "Chojins/chess_game_001_red_stereo",
+    "Chojins/chess_game_009_white",
+    "lirislab/guess_who_so100",
+)
 
 
 class Act12Dataset(Dataset):
@@ -43,9 +54,11 @@ class Act12Dataset(Dataset):
 
 
 class SO100Act12DataModule(SO100DataModule):
-    def __init__(self, *args, delta_stats_path: str | None = None, **kwargs):
+    def __init__(self, *args, delta_stats_path: str | None = None,
+                 exclude_moving_camera: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
         self.delta_stats_path = delta_stats_path
+        self.exclude_moving_camera = exclude_moving_camera
 
     def _delta_std(self) -> torch.Tensor:
         p = self.delta_stats_path or (Path(self.root) / "so100_delta_statistics.json")
@@ -53,6 +66,12 @@ class SO100Act12DataModule(SO100DataModule):
         return torch.tensor(stats["std"], dtype=torch.float32)
 
     def setup(self, stage=None):
+        if self.exclude_moving_camera and self.dataset_paths == "auto":
+            found = discover_lerobot_so100_datasets(self.root)
+            keep = [p for p in found if p not in MOVING_CAMERA_DATASETS]
+            dropped = len(found) - len(keep)
+            print(f"[ft] 카메라 이동 데이터셋 {dropped}개 제외 — {len(found)} → {len(keep)}", flush=True)
+            self.dataset_paths = keep
         super().setup(stage)
         action_std = self.train_dataset.action_std
         if action_std is None:
