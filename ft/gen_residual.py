@@ -55,6 +55,9 @@ def main() -> None:
     p.add_argument("--fps", type=int, default=6)
     p.add_argument("--precision", type=int, default=16)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--pixel-composite", action="store_true",
+                   help="원본 픽셀 + (decode(z_정적+Δ) − decode(z_정적)). VAE 왕복 오차가 상쇄되고 "
+                        "Δ=0 이면 출력이 원본 첫 프레임과 비트 단위로 같아진다")
     p.add_argument("--verify-static", action="store_true", help="프레임 간 차이가 0 인지 검사")
     args = p.parse_args()
 
@@ -103,6 +106,11 @@ def main() -> None:
             z_static = static_latent(z)
             delta = model.predict_residual(z_static, c, fs=fs.long())
             video = model.decode_first_stage((z_static + delta).float())
+            if args.pixel_composite:
+                # decode(z_정적) 은 16프레임이 전부 같으므로 한 장만 디코드해 펼친다
+                rec_static = model.decode_first_stage(z_static[:, :, :1].float())
+                base = batch["video"][:, :, :1]              # 킷 전처리된 원본 첫 프레임
+                video = (base + (video - rec_static)).clamp(-1, 1)
 
         if args.verify_static:
             v = video[0]                                   # [c, t, h, w]
