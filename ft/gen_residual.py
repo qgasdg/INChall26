@@ -55,6 +55,9 @@ def main() -> None:
     p.add_argument("--fps", type=int, default=6)
     p.add_argument("--precision", type=int, default=16)
     p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--zero-mean-delta", action="store_true",
+                   help="Δ 에서 시간 평균을 뺀다. 차분 손실은 상수 성분을 벌하지도 보상하지도 않아 "
+                        "오프셋이 제약 없이 떠다니는데, 이걸 빼면 출력의 시간 평균이 정적과 같아진다")
     p.add_argument("--pixel-composite", action="store_true",
                    help="원본 픽셀 + (decode(z_정적+Δ) − decode(z_정적)). VAE 왕복 오차가 상쇄되고 "
                         "Δ=0 이면 출력이 원본 첫 프레임과 비트 단위로 같아진다")
@@ -105,6 +108,8 @@ def main() -> None:
             z, c, fs = model.get_batch_input(batch, random_uncond=False, return_fs=True)
             z_static = static_latent(z)
             delta = model.predict_residual(z_static, c, fs=fs.long())
+            if args.zero_mean_delta:
+                delta = delta - delta.mean(dim=2, keepdim=True)
             video = model.decode_first_stage((z_static + delta).float())
             if args.pixel_composite:
                 # decode(z_정적) 은 16프레임이 전부 같으므로 한 장만 디코드해 펼친다

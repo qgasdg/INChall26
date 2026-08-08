@@ -9,20 +9,21 @@
 | 순위 | 점수 | 제출 | 담당 | 요지 |
 |---:|---:|---|---|---|
 | 1 | **0.3019** | `submission_features.csv` (8/4 19:38) | — | **정적** — 첫 프레임 16회 반복. 모델 없음 |
-| 2 | **0.3031** | `step0_submission.csv` (8/5 23:23) | 태양 | **1.4B DynamiCrafter 사전학습만, 파인튜닝 0스텝** |
-| 3 | 0.3270 | `submission_features.csv` (8/5 21:06) | 태양 | 균등 loss 500스텝 · motion_area 0.149 |
-| 4 | 0.3292 | `v1_2200_submission.csv` (8/6 19:02) | 태양 | 균등 loss ~1,750스텝 · motion_area 0.132 (U자 회복) |
-| 5 | **0.3355** | `submission_ft22_composite.csv` (8/8) | 윤택 | **잔차 + 픽셀 합성** — VAE 왕복 상쇄. 우리 생성물 중 최고 |
-| 6 | **0.3403** | `submission_ft20_residual.csv` (8/8) | 윤택 | **잔차 모델** — 0스텝이 정확히 정적 (ft-22 의 잠재공간 판) |
-| 7 | 0.3467 | `ck1250_submission.csv` (8/6 12:36) | 태양 | 균등 loss 1,250스텝 · motion_area 0.272 |
-| 8 | **0.3729** | `submission_ft01_act12_step0.csv` (8/7 22:50) | 윤택 | **1.4B 백본 정상 적재(96.8%) 0스텝 + 액션 12차원** · 코드 `09e75e5` |
-| 9 | 0.3762 | `v2_500_submission.csv` (8/6 20:17) | 태양 | motion-weighted loss + 액션 lr 10배 · motion_area 0.338 |
-| 10 | **0.3948** | `submission_ft05_parity.csv` (8/8) | 윤택 | ft-01 + zero-init 액션 · `fs_condition` true · `ddim_eta` 0 · `guidance_rescale` 제거 · DDIM 15 |
-| 11 | 0.3957 | `step0_rff_submission.csv` (8/6 01:02) | 태양 | step0 + replace-first-frame |
-| 12 | **0.4132** | `submission_ft07_s50.csv` (8/8) | 윤택 | ft-05 + DDIM 50 — **가장 선명한데 가장 나쁨** |
-| 13 | **0.4668** | `submission_dreamzero.csv` (8/7 03:12) | 윤택 | **DreamZero-SO101 LoRA 제로샷** |
-| 14 | **0.4888** | `submission_ft12_action_trained.csv` (8/8) | 윤택 | **액션 대조 손실 500스텝** — 액션은 붙었는데(gap 3σ) 점수는 악화 |
-| 15 | 0.5166 | `baseline_submission.csv` (8/4 23:56) | 태양 | 대회 제공 11M UNet, scratch 학습 |
+| 2 | **0.3030** | `submission_ft23_zeromean.csv` (8/8) | 윤택 | **잔차 + 픽셀합성 + 오프셋 제거** — 정적과 사실상 동률. 우리 최고 |
+| 3 | **0.3031** | `step0_submission.csv` (8/5 23:23) | 태양 | **1.4B DynamiCrafter 사전학습만, 파인튜닝 0스텝** |
+| 4 | 0.3270 | `submission_features.csv` (8/5 21:06) | 태양 | 균등 loss 500스텝 · motion_area 0.149 |
+| 5 | 0.3292 | `v1_2200_submission.csv` (8/6 19:02) | 태양 | 균등 loss ~1,750스텝 · motion_area 0.132 (U자 회복) |
+| 6 | **0.3355** | `submission_ft22_composite.csv` (8/8) | 윤택 | **잔차 + 픽셀 합성** — VAE 왕복 상쇄. 우리 생성물 중 최고 |
+| 7 | **0.3403** | `submission_ft20_residual.csv` (8/8) | 윤택 | **잔차 모델** — 0스텝이 정확히 정적 (ft-22 의 잠재공간 판) |
+| 8 | 0.3467 | `ck1250_submission.csv` (8/6 12:36) | 태양 | 균등 loss 1,250스텝 · motion_area 0.272 |
+| 9 | **0.3729** | `submission_ft01_act12_step0.csv` (8/7 22:50) | 윤택 | **1.4B 백본 정상 적재(96.8%) 0스텝 + 액션 12차원** · 코드 `09e75e5` |
+| 10 | 0.3762 | `v2_500_submission.csv` (8/6 20:17) | 태양 | motion-weighted loss + 액션 lr 10배 · motion_area 0.338 |
+| 11 | **0.3948** | `submission_ft05_parity.csv` (8/8) | 윤택 | ft-01 + zero-init 액션 · `fs_condition` true · `ddim_eta` 0 · `guidance_rescale` 제거 · DDIM 15 |
+| 12 | 0.3957 | `step0_rff_submission.csv` (8/6 01:02) | 태양 | step0 + replace-first-frame |
+| 13 | **0.4132** | `submission_ft07_s50.csv` (8/8) | 윤택 | ft-05 + DDIM 50 — **가장 선명한데 가장 나쁨** |
+| 14 | **0.4668** | `submission_dreamzero.csv` (8/7 03:12) | 윤택 | **DreamZero-SO101 LoRA 제로샷** |
+| 15 | **0.4888** | `submission_ft12_action_trained.csv` (8/8) | 윤택 | **액션 대조 손실 500스텝** — 액션은 붙었는데(gap 3σ) 점수는 악화 |
+| 16 | 0.5166 | `baseline_submission.csv` (8/4 23:56) | 태양 | 대회 제공 11M UNet, scratch 학습 |
 
 참고 — 초기화 전 기록: 정적 0.3028(7/18), IRASim FT 0.3794(7/27).
 현 리더보드: 1위 0.171 · 10위 0.248.
