@@ -48,7 +48,8 @@ def main() -> None:
                    default=os.path.expanduser("~/ft/data/train/so100_action_statistics.json"))
     p.add_argument("--delta-stats", default=os.path.expanduser("~/ft/data/train/so100_delta_statistics.json"))
     p.add_argument("--out", default=os.path.expanduser("~/ft/out/peek"))
-    p.add_argument("--eval-id", default="sample_000000")
+    p.add_argument("--eval-id", default="sample_000000",
+                   help="eval 샘플 id. 쉼표로 여러 개 — 한 번의 적재로 전부 뽑는다")
     p.add_argument("--train-idx", default="-1",
                    help="val_dataset 인덱스. 쉼표로 여러 개(예: 0,1,5) — 한 번의 적재로 전부 뽑는다. -1 이면 무작위 1개")
     p.add_argument("--ddim-steps", type=int, default=None)
@@ -116,12 +117,14 @@ def main() -> None:
             print(f"[{tag}] {time.time()-t0:.1f}초 → {out/f'{tag}.png'}", flush=True)
 
     # ── eval ──────────────────────────────────────────────────────────
-    b = build_inference_batch(Path(args.challenge_root), [args.eval_id],
-                              tp.target_height, tp.target_width, tp.pad, args.fps,
-                              action_mean, action_std, device)
-    b["act"] = to_12dim(b["act"], action_std, delta_std)
-    save_grid(b["video"][0, :, :1].expand(-1, 16, -1, -1), out / f"eval_{args.eval_id}_input.png")
-    run(b, f"eval_{args.eval_id}_{args.tag}")
+    for sid in args.eval_id.split(","):
+        sid = sid.strip()
+        b = build_inference_batch(Path(args.challenge_root), [sid],
+                                  tp.target_height, tp.target_width, tp.pad, args.fps,
+                                  action_mean, action_std, device)
+        b["act"] = to_12dim(b["act"], action_std, delta_std)
+        save_grid(b["video"][0, :, :1].expand(-1, 16, -1, -1), out / f"eval_{sid}_input.png")
+        run(b, f"eval_{sid}_{args.tag}")
 
     # ── train ─────────────────────────────────────────────────────────
     data = instantiate_from_config(cfg.data); data.setup()
