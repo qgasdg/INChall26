@@ -1,4 +1,4 @@
-name: base-01
+name: base-02
 group: base
 logdir: /home/sun4208/ft/outputs
 
@@ -32,7 +32,7 @@ model:
   target: model.BaseLatentVisualDiffusion   # ★ 킷 클래스 서브클래스 — SDPA 어텐션 + 동결 범위 (base/model.py)
   params:
     save_only_unet: True
-    linear_warmup_steps: 250
+    linear_warmup_steps: 50       # ★ 250 이면 300스텝 실행의 대부분이 학습률 램프 구간이 된다
     rescale_betas_zero_snr: True
     parameterization: "v"
     linear_start: 0.00085
@@ -42,7 +42,12 @@ model:
     timesteps: 1000
     first_stage_key: video
     cond_stage_key: caption
-    freeze_scope: encoder         # ★ none 은 32GB 에 50MB 모자라 OOM. input_blocks(447M) 동결, 디코더+middle 994M 학습
+    freeze_scope: encoder         # none 은 32GB 에 50MB 모자라 OOM. input_blocks(447M) 동결, 디코더+middle 994M 학습
+    # ★ base-01 600스텝에서 로봇 팔이 '지워졌다'. 팔은 화면의 2~5%뿐이라 지우는 게 손실상 이득이기 때문.
+    #    GT 에서 시간에 따라 변하는 자리에 가중치를 줘 지우는 선택을 비싸게 만든다.
+    motion_weight: 4.0
+    # ★ base-01 300스텝에서 이어받는다. 600 은 이미 '지우기' 해법에 안착해 출발점으로 나쁘다.
+    resume_unet: /home/sun4208/ft/outputs/base-01/checkpoints/epoch=0-step=300.ckpt
     cond_stage_trainable: False
     image_proj_model_trainable: False
     conditioning_key: hybrid
@@ -65,7 +70,8 @@ model:
         action_conditioned: True
         add_act_time_emb: True      # ★ False 면 time_embed 가 1280→640 이 되어 사전학습과 충돌
         action_dims: 12             # ★ 절대 6 + Δ 6
-        action_dropout_prob: 0.0
+        action_dropout_prob: 0.1    # ★ 0 이면 null_action_emb 가 그래디언트를 못 받아
+                                    #   추론의 액션 CFG 기준점이 학습 안 된 값으로 남는다
         use_scale_shift_norm: False # ★ backbone 은 False. True 면 emb_layers 가 2배 어긋난다
         in_channels: 8
         out_channels: 4
