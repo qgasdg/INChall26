@@ -1,10 +1,11 @@
-"""0스텝(제로샷) 생성 — eval 몇 개만 뽑아 눈으로 본다.
+"""eval 영상 생성 — 대회 baseline 확산 파이프라인.
 
-킷 코드(scripts/inference/generate_baseline_videos.py)를 고치지 않고, 거기 함수만 빌려
-① 샘플 수를 제한하고 ② 프레임 그리드 PNG 도 같이 남긴다.
+킷 코드(scripts/inference/generate_baseline_videos.py)는 고치지 않고 거기 함수만 빌린다.
+더한 것은 ① 샘플 범위 지정 ② 12차원 액션 변환 ③ 프레임 그리드 PNG ④ 학습 체크포인트 적재.
 
-학습된 체크포인트가 없으므로 act_cond_unet_checkpoint 를 쓰지 않는다.
-config 의 pretrained_checkpoint + only_reload_modules(=UNet 포함)만으로 모델이 선다.
+`--ckpt` 없이 돌리면 사전학습 백본만으로 생성한다(0스텝). 그때는 **`--no-ema` 가 필수**다 —
+LitEma 는 백본 적재 이전의 무작위 가중치를 들고 있고 backbone.ckpt 에 model_ema.* 가 없어
+갱신되지 않으므로, 켜두면 전 프레임이 노이즈로 나온다.
 """
 from __future__ import annotations
 
@@ -68,7 +69,7 @@ def to_12dim(act: torch.Tensor, action_std: torch.Tensor, delta_std: torch.Tenso
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--config", default=os.path.expanduser("~/ft/configs/ft-00-step0.yaml"))
+    p.add_argument("--config", default=os.path.expanduser("~/base/base-01.yaml"))
     p.add_argument("--challenge-root", default=os.path.expanduser("~/ft/data/eval"))
     p.add_argument("--action-stats-path",
                    default=os.path.expanduser("~/ft/data/train/so100_action_statistics.json"))
@@ -80,12 +81,10 @@ def main() -> None:
     p.add_argument("--precision", type=int, default=16)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--action-dims", type=int, default=6, help="12 이면 절대6 + Δ6")
-    p.add_argument("--action-ckpt", default=None,
-                   help="extract_action_ckpt.py 로 뽑은 액션 가중치(.pt). 주면 zero-init 대신 이걸 싣는다")
+    p.add_argument("--ckpt", default=None,
+                   help="학습 체크포인트(.ckpt). 백본 위에 덮어씌운다. save_only_unet 이라 model* 만 들어 있다")
     p.add_argument("--no-ema", action="store_true",
                    help="EMA 비활성화 — 0스텝에서는 EMA 가 사전학습 이전의 랜덤 가중치를 들고 있다")
-    p.add_argument("--zero-init-action", action="store_true",
-                   help="action_embed 마지막 층을 0으로 — 0스텝에서 액션 기여를 정확히 0으로 만든다")
     p.add_argument("--delta-stats", default=os.path.expanduser("~/ft/data/train/so100_delta_statistics.json"))
     args = p.parse_args()
 
@@ -99,20 +98,11 @@ def main() -> None:
         print(">>> use_ema=False — 로드된 가중치를 그대로 쓴다")
     print(">>> 모델 구성 중 (backbone 적재)")
     model = get_model(cfg.model)
-    if args.action_ckpt:
-        act_sd = torch.load(args.action_ckpt, map_location="cpu")
-        missing, unexpected = model.load_state_dict(act_sd, strict=False)
-        loaded = [k for k in act_sd if k not in unexpected]
-        if len(loaded) != len(act_sd):
-            raise SystemExit(f"액션 가중치 적재 실패 — 안 실린 키: {unexpected}")
-        print(f">>> 액션 가중치 {len(loaded)}개 적재: {args.action_ckpt}")
-        for k, v in act_sd.items():
-            print(f"      {k}  |w| 평균 {v.float().abs().mean():.3e}")
-    elif args.zero_init_action:
-        ae = model.model.diffusion_model.action_embed
-        last = [m for m in ae if isinstance(m, torch.nn.Linear)][-1]
-        torch.nn.init.zeros_(last.weight); torch.nn.init.zeros_(last.bias)
-        print(">>> action_embed 마지막 층 0 초기화 — 액션 기여 = 0")
+    if args.ckpt:
+        sd = torch.load(args.ckpt, map_location="cpu")
+        sd = sd.get("state_dict", sd)
+        missing, unexpected = model.load_state_dict(sd, strict=False)
+        print(f">>> 학습 체크포인트 적재: {args.ckpt} (안 실린 키 {len(unexpected)}개)")
 
     model.to(device).eval()
     sampler = DDIMSampler(model)

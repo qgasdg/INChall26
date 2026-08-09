@@ -7,7 +7,7 @@ a[t]-a[t-1] = (z[t]-z[t-1])*action_std 이므로, Δ 전용 std 로 다시 나�
 `make_delta_stats.py` 가 만든 so100_delta_statistics.json 을 쓴다.
 t=0 의 Δ 는 0.
 
-추론(`gen_step0.py:to_12dim`)과 **같은 식**이어야 한다 — 다르면 학습·추론 분포가 어긋난다.
+추론(`generate.py:to_12dim`)과 **같은 식**이어야 한다 — 다르면 학습·추론 분포가 어긋난다.
 """
 from __future__ import annotations
 
