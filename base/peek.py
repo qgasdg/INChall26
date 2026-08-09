@@ -49,8 +49,13 @@ def main() -> None:
     p.add_argument("--delta-stats", default=os.path.expanduser("~/ft/data/train/so100_delta_statistics.json"))
     p.add_argument("--out", default=os.path.expanduser("~/ft/out/peek"))
     p.add_argument("--eval-id", default="sample_000000")
-    p.add_argument("--train-idx", type=int, default=-1, help="-1 이면 val_dataset 에서 무작위 1개")
+    p.add_argument("--train-idx", default="-1",
+                   help="val_dataset 인덱스. 쉼표로 여러 개(예: 0,1,5) — 한 번의 적재로 전부 뽑는다. -1 이면 무작위 1개")
     p.add_argument("--ddim-steps", type=int, default=None)
+    p.add_argument("--cfg", default=None,
+                   help="액션 CFG 배율. 쉼표로 여러 개(예: 1.0,2.0,4.0) — 한 번의 적재로 전부 뽑는다. "
+                        "무조건부 분기는 act 키가 없어 null_action_emb 를 쓰므로 액션 성분이 증폭된다. "
+                        "★ action_dropout_prob>0 으로 학습한 체크포인트에서만 의미가 있다")
     p.add_argument("--fps", type=int, default=6)
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--ckpt", default=None)
@@ -87,21 +92,28 @@ def main() -> None:
     out = Path(args.out); out.mkdir(parents=True, exist_ok=True)
     tp = cfg.data.params
 
+    scales = [float(x) for x in args.cfg.split(",")] if args.cfg else [None]
+
     def run(batch, name):
-        t0 = time.time()
         z, c, uc, cond_mask, _, kw = model.prepare_batch_for_inference(batch)
-        sk = dict(ddim_kwargs); sk.update(kw)
-        steps = sk.pop("ddim_steps")
         shape = (model.channels, model.temporal_length, *model.image_size)
-        with torch.no_grad(), (nullcontext() if args.no_ema else model.ema_scope("peek")):
-            with torch.cuda.amp.autocast():
-                s, _ = sampler.sample(steps, batch_size=z.shape[0], shape=shape,
-                                      conditioning=c, unconditional_conditioning=uc,
-                                      mask=cond_mask, x0=z, **sk)
-            gen = model.decode_first_stage(s)
-        save_grid(gen[0], out / f"{name}.png")
-        print(f"[{name}] {time.time()-t0:.1f}초 → {out/f'{name}.png'}", flush=True)
-        return gen[0]
+        for w in scales:
+            t0 = time.time()
+            sk = dict(ddim_kwargs); sk.update(kw)
+            steps = sk.pop("ddim_steps")
+            if w is not None:
+                sk["unconditional_guidance_scale"] = w
+            tag = name if w is None else f"{name}_cfg{w:g}"
+            # 시드를 매번 같게 둬야 CFG 배율만의 차이를 본다
+            torch.manual_seed(args.seed)
+            with torch.no_grad(), (nullcontext() if args.no_ema else model.ema_scope("peek")):
+                with torch.cuda.amp.autocast():
+                    s, _ = sampler.sample(steps, batch_size=z.shape[0], shape=shape,
+                                          conditioning=c, unconditional_conditioning=uc,
+                                          mask=cond_mask, x0=z, **sk)
+                gen = model.decode_first_stage(s)
+            save_grid(gen[0], out / f"{tag}.png")
+            print(f"[{tag}] {time.time()-t0:.1f}초 → {out/f'{tag}.png'}", flush=True)
 
     # ── eval ──────────────────────────────────────────────────────────
     b = build_inference_batch(Path(args.challenge_root), [args.eval_id],
@@ -114,21 +126,25 @@ def main() -> None:
     # ── train ─────────────────────────────────────────────────────────
     data = instantiate_from_config(cfg.data); data.setup()
     ds = data.val_dataset
-    idx = args.train_idx if args.train_idx >= 0 else int(np.random.RandomState(args.seed).randint(len(ds)))
-    item = ds[idx]
-    gt = item["video"].unsqueeze(0).to(device)                 # [1,c,T,h,w] — 정답
-    save_grid(gt[0], out / f"train{idx}_gt.png")
+    if args.train_idx.strip() == "-1":
+        idxs = [int(np.random.RandomState(args.seed).randint(len(ds)))]
+    else:
+        idxs = [int(x) for x in args.train_idx.split(",")]
+    print(f">>> val 클립 {len(ds)}개 중 {idxs}", flush=True)
 
-    vid = torch.zeros_like(gt)
-    vid[:, :, 0] = gt[:, :, 0]                                  # eval 과 동일: 첫 프레임만
-    tb = {"video": vid,
-          "act": item["act"].unsqueeze(0).to(device),           # data12 가 이미 12차원으로 준다
-          "caption": [""],
-          "fps": torch.full((1,), args.fps, dtype=torch.long, device=device),
-          "frame_stride": torch.full((1,), args.fps, dtype=torch.long, device=device),
-          "start_idx": torch.zeros(1, dtype=torch.long, device=device)}
-    print(f">>> train 샘플 {idx} (act shape {tuple(item['act'].shape)})", flush=True)
-    run(tb, f"train{idx}_{args.tag}")
+    for idx in idxs:
+        item = ds[idx]
+        gt = item["video"].unsqueeze(0).to(device)              # [1,c,T,h,w] — 정답
+        save_grid(gt[0], out / f"train{idx}_gt.png")
+        vid = torch.zeros_like(gt)
+        vid[:, :, 0] = gt[:, :, 0]                              # eval 과 동일: 첫 프레임만
+        tb = {"video": vid,
+              "act": item["act"].unsqueeze(0).to(device),       # data12 가 이미 12차원으로 준다
+              "caption": [""],
+              "fps": torch.full((1,), args.fps, dtype=torch.long, device=device),
+              "frame_stride": torch.full((1,), args.fps, dtype=torch.long, device=device),
+              "start_idx": torch.zeros(1, dtype=torch.long, device=device)}
+        run(tb, f"train{idx}_{args.tag}")
 
     print(f"\n저장 위치: {out}")
 
