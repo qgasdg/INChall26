@@ -19,8 +19,11 @@ import torch
 import torch.nn.functional as F
 from einops import rearrange
 
+from torch import nn
+
 from lvdm.models.ddpm3d import LatentVisualDiffusion
 from lvdm.modules import attention as _attn
+from lvdm.modules.networks.openaimodel3d import UNetModel
 
 _PATCHED = False
 
@@ -70,6 +73,47 @@ def enable_sdpa_attention() -> None:
     print(">>> [base] 어텐션을 torch SDPA 로 교체", flush=True)
 
 
+class ActionCtxUNet(UNetModel):
+    """액션을 **cross-attention 으로도** 넣기 위한 토큰 생성기를 UNet 에 붙인다.
+
+    **왜.** 기존 경로는 `emb = time_emb + act_emb` 라 프레임당 벡터 하나가 공간 전체에
+    균일하게 퍼진다 — "얼마나"는 말해도 **"어디를"은 표현할 자리가 없다**(dacon_submission ⑦).
+    cross-attention 은 공간 위치마다 자기 주의 가중치를 계산하므로 지목이 가능하다.
+
+    **어디에 싣나.** 킷 UNet 은 `context` 길이가 `77 + t*16` 이면 이미지 토큰을
+    **프레임별로** 펼치는 분기를 이미 갖고 있다(`openaimodel3d.py:719`). 그 슬롯에 액션 토큰을
+    더한다 — 킷 코드를 고칠 필요가 없고, 무조건부 분기(`uc`, 길이 93)에는 액션이 안 들어가므로
+    **액션 CFG 가 그대로 성립**한다.
+
+    **왜 UNet 에 두나.** `save_only_unet: True` 라 `self.model` 아래가 아니면 체크포인트에
+    저장되지 않는다. 확산 모델 쪽에 두면 학습해놓고 잃어버린다.
+
+    마지막 층은 zero-init 이라 **학습 시작 시점의 출력이 기존과 수치적으로 동일**하다.
+    """
+
+    def __init__(self, *args, action_ctx_tokens: int = 16, action_ctx_dim: int = 1024,
+                 action_ctx_hidden: int = 512, **kwargs):
+        super().__init__(*args, **kwargs)
+        d_in = kwargs.get("action_dims", 6)
+        self.action_ctx_tokens = action_ctx_tokens
+        self.action_ctx_dim = action_ctx_dim
+        self.action_ctx = nn.Sequential(
+            nn.Linear(d_in, action_ctx_hidden),
+            nn.SiLU(),
+            nn.Linear(action_ctx_hidden, action_ctx_tokens * action_ctx_dim),
+        )
+        nn.init.zeros_(self.action_ctx[-1].weight)
+        nn.init.zeros_(self.action_ctx[-1].bias)
+        n = sum(p.numel() for p in self.action_ctx.parameters())
+        print(f">>> [base] 액션 cross-attention 토큰 {action_ctx_tokens}개 "
+              f"({n/1e6:.1f}M, zero-init)", flush=True)
+
+    def action_tokens(self, act):
+        """act: [b, t, d] → [b, t, K, C]"""
+        b, t, _ = act.shape
+        return self.action_ctx(act).view(b, t, self.action_ctx_tokens, self.action_ctx_dim)
+
+
 # freeze_scope → 동결할 UNet 하위 모듈 이름
 _SCOPES = {
     "none": (),                                  # 전체 학습 (1440M)
@@ -80,7 +124,8 @@ _SCOPES = {
 
 class BaseLatentVisualDiffusion(LatentVisualDiffusion):
     def __init__(self, *args, freeze_scope: str = "none",
-                 motion_weight: float = 0.0, resume_unet: str | None = None, **kwargs):
+                 motion_weight: float = 0.0, resume_unet: str | None = None,
+                 optimizer: str = "adamw", **kwargs):
         enable_sdpa_attention()
         super().__init__(*args, **kwargs)
         if freeze_scope not in _SCOPES:
@@ -88,6 +133,7 @@ class BaseLatentVisualDiffusion(LatentVisualDiffusion):
         self.freeze_scope = freeze_scope
         self.motion_weight = float(motion_weight)
         self.resume_unet = resume_unet
+        self.optimizer_name = optimizer
 
         unet = self.model.diffusion_model
         for name in _SCOPES[freeze_scope]:
@@ -109,6 +155,62 @@ class BaseLatentVisualDiffusion(LatentVisualDiffusion):
         if self.learn_logvar:
             params.append(self.logvar)
         return params
+
+    def configure_optimizers(self):
+        """`optimizer: adamw8bit` 이면 8비트 Adam 을 쓴다.
+
+        **왜.** AdamW 는 파라미터당 상태 2개를 fp32 로 들고 있어 1.44B 전체를 학습하면
+        그것만 10.7GB 다. 32GB 에서 전체 미세조정이 **50MB 모자라** 죽었던 주범이다.
+        8비트로 두면 2.7GB 로 줄어 인코더까지 풀 수 있다. 확산모델 미세조정에서
+        널리 쓰이는 방식이고 품질 손해는 거의 보고되지 않는다.
+
+        스케줄러(선형 워밍업)는 킷 원본과 같게 유지한다.
+        """
+        if self.optimizer_name != "adamw8bit":
+            return super().configure_optimizers()
+
+        import bitsandbytes as bnb
+        params = self.get_param_list()
+        n = sum(p.numel() for p in params)
+        opt = bnb.optim.AdamW8bit(params, lr=self.learning_rate)
+        print(f">>> [base] AdamW8bit · 학습 {n/1e6:.1f}M · 옵티마이저 상태 {n*2/2**30:.1f}GB "
+              f"(fp32 였다면 {n*8/2**30:.1f}GB)", flush=True)
+
+        def lr_lambda(step: int) -> float:
+            return min(1.0, step / self.linear_warmup_steps)
+
+        return [opt], [{"scheduler": torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda),
+                        "interval": "step"}]
+
+    def get_batch_input(self, batch, random_uncond, **kwargs):
+        """킷이 만든 `c_crossattn` 을 프레임별로 펼치고 액션 토큰을 더한다.
+
+        원본은 `[b, 77+16, C]`(텍스트 77 + 이미지 16, 프레임 공용)이다. 이를
+        `[b, 77 + t*16, C]` 로 바꾸면 UNet 이 이미지 토큰을 프레임별로 쪼개주므로
+        (`openaimodel3d.py:719`), 그 자리에 프레임별 액션 토큰을 실을 수 있다.
+
+        zero-init 이라 학습 시작 시점에는 원본과 값이 같다 — 프레임마다 같은 이미지 토큰이
+        복제될 뿐이고, 그건 원본의 `repeat_interleave` 와 동일하다.
+        """
+        out = super().get_batch_input(batch, random_uncond, **kwargs)
+        unet = self.model.diffusion_model
+        if not getattr(unet, "action_ctx_tokens", 0):
+            return out
+
+        z, cond = out[0], out[1]
+        ctx = cond["c_crossattn"][0]                       # [b, 77+K, C]
+        K = unet.action_ctx_tokens
+        text, img = ctx[:, :-K], ctx[:, -K:]               # 이미지 토큰이 뒤쪽 K 개다
+        b, _, C = img.shape
+        t = z.shape[2]
+
+        tok = unet.action_tokens(cond["act"])              # [b, t, K, C]
+        if self.training and unet.action_dropout_prob > 0:
+            keep = (torch.rand(b, device=tok.device) >= unet.action_dropout_prob)
+            tok = tok * keep.view(b, 1, 1, 1)              # 떨어뜨린 표본은 액션 없음과 같아진다
+        ctx_img = (img.unsqueeze(1) + tok).reshape(b, t * K, C)
+        cond["c_crossattn"] = [torch.cat([text, ctx_img], dim=1)]
+        return out
 
     def setup(self, stage=None):
         """중간 체크포인트에서 이어받기.
