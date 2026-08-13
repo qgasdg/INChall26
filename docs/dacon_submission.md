@@ -15,23 +15,24 @@
 | 5 | 0.3292 | `v1_2200_submission.csv` (8/6 19:02) | 태양 | 균등 loss ~1,750스텝 · motion_area 0.132 (U자 회복) |
 | 6 | **0.3355** | `submission_ft22_composite.csv` (8/8) | 윤택 | **잔차 + 픽셀 합성** — VAE 왕복 상쇄. 우리 생성물 중 최고 |
 | 7 | **0.3364** | `submission_base01_300.csv` (8/9) | 윤택 | **1.4B 정상 미세조정 300스텝** — 장치 없는 순수 확산. 0스텝 0.3729 대비 −0.0365 |
-| 8 | **0.3394** | `submission_base06_2100.csv` (8/10) | 윤택 | **액션 cross-attention + 인코더 해제**, 누적 2,400스텝 |
-| 9 | **0.3403** | `submission_ft20_residual.csv` (8/8) | 윤택 | **잔차 모델** — 0스텝이 정확히 정적 (ft-22 의 잠재공간 판) |
-| 10 | 0.3467 | `ck1250_submission.csv` (8/6 12:36) | 태양 | 균등 loss 1,250스텝 · motion_area 0.272 |
-| 11 | **0.3729** | `submission_ft01_act12_step0.csv` (8/7 22:50) | 윤택 | **1.4B 백본 정상 적재(96.8%) 0스텝 + 액션 12차원** · 코드 `09e75e5` |
-| 12 | 0.3762 | `v2_500_submission.csv` (8/6 20:17) | 태양 | motion-weighted loss + 액션 lr 10배 · motion_area 0.338 |
-| 13 | **0.3948** | `submission_ft05_parity.csv` (8/8) | 윤택 | ft-01 + zero-init 액션 · `fs_condition` true · `ddim_eta` 0 · `guidance_rescale` 제거 · DDIM 15 |
-| 14 | 0.3957 | `step0_rff_submission.csv` (8/6 01:02) | 태양 | step0 + replace-first-frame |
-| 15 | **0.3979** | `submission_base04_1500.csv` (8/10) | 윤택 | **누적 2,400스텝** — 전체 데이터셋 + 움직임가중·액션드롭아웃 |
-| 16 | **0.4132** | `submission_ft07_s50.csv` (8/8) | 윤택 | ft-05 + DDIM 50 — **가장 선명한데 가장 나쁨** |
-| 17 | **0.4668** | `submission_dreamzero.csv` (8/7 03:12) | 윤택 | **DreamZero-SO101 LoRA 제로샷** |
-| 18 | **0.4888** | `submission_ft12_action_trained.csv` (8/8) | 윤택 | **액션 대조 손실 500스텝** — 액션은 붙었는데(gap 3σ) 점수는 악화 |
-| 19 | 0.5166 | `baseline_submission.csv` (8/4 23:56) | 태양 | 대회 제공 11M UNet, scratch 학습 |
+| 8 | **0.3381** | `submission_base08_2100.csv` (8/14) | 윤택 | **레이아웃 수정 + 궤적요약**, 누적 2,400스텝 |
+| 9 | **0.3394** | `submission_base06_2100.csv` (8/10) | 윤택 | **액션 cross-attention + 인코더 해제**, 누적 2,400스텝 |
+| 10 | **0.3403** | `submission_ft20_residual.csv` (8/8) | 윤택 | **잔차 모델** — 0스텝이 정확히 정적 (ft-22 의 잠재공간 판) |
+| 11 | 0.3467 | `ck1250_submission.csv` (8/6 12:36) | 태양 | 균등 loss 1,250스텝 · motion_area 0.272 |
+| 12 | **0.3729** | `submission_ft01_act12_step0.csv` (8/7 22:50) | 윤택 | **1.4B 백본 정상 적재(96.8%) 0스텝 + 액션 12차원** · 코드 `09e75e5` |
+| 13 | 0.3762 | `v2_500_submission.csv` (8/6 20:17) | 태양 | motion-weighted loss + 액션 lr 10배 · motion_area 0.338 |
+| 14 | **0.3948** | `submission_ft05_parity.csv` (8/8) | 윤택 | ft-01 + zero-init 액션 · `fs_condition` true · `ddim_eta` 0 · `guidance_rescale` 제거 · DDIM 15 |
+| 15 | 0.3957 | `step0_rff_submission.csv` (8/6 01:02) | 태양 | step0 + replace-first-frame |
+| 16 | **0.3979** | `submission_base04_1500.csv` (8/10) | 윤택 | **누적 2,400스텝** — 전체 데이터셋 + 움직임가중·액션드롭아웃 |
+| 17 | **0.4132** | `submission_ft07_s50.csv` (8/8) | 윤택 | ft-05 + DDIM 50 — **가장 선명한데 가장 나쁨** |
+| 18 | **0.4668** | `submission_dreamzero.csv` (8/7 03:12) | 윤택 | **DreamZero-SO101 LoRA 제로샷** |
+| 19 | **0.4888** | `submission_ft12_action_trained.csv` (8/8) | 윤택 | **액션 대조 손실 500스텝** — 액션은 붙었는데(gap 3σ) 점수는 악화 |
+| 20 | 0.5166 | `baseline_submission.csv` (8/4 23:56) | 태양 | 대회 제공 11M UNet, scratch 학습 |
 
 참고 — 초기화 전 기록: 정적 0.3028(7/18), IRASim FT 0.3794(7/27).
 현 리더보드: 1위 0.171 · 10위 0.248.
 
-## 읽는 법 — 열 가지가 보인다
+## 읽는 법 — 열한 가지가 보인다
 
 **① 아직 아무것도 정적을 못 이겼다.**
 최고가 정적 0.3019이고, 2위 step0(0.3031)이 사실상 동률이다. **생성 모델이 만든 움직임이
@@ -196,6 +197,29 @@ cross-attention 만 / 인코더 해제만 / `motion_weight` 만.
 한 줄도 안 고치고 프레임별 cross-attention 이 되고, 무조건부 분기(`uc`, 길이 93)에는 액션이
 안 들어가므로 액션 CFG 도 그대로 성립한다. zero-init 이라 시작 시점 출력이 원본과
 `torch.equal` 로 일치함을 확인했다. 자세한 건 `base/README.md`.
+
+**★⑪ 레이아웃 버그를 고쳐도 점수가 안 변했다 — cross-attention 은 기여자가 아니었다 (2026-08-14).**
+⑩의 base-06 은 **context 레이아웃이 망가진 채** 학습됐다. Resampler 가 내는 이미지 토큰이
+16개가 아니라 `num_queries × video_length = 256`개인데(`resampler.py:118`), 뒤 16개만 이미지로
+보고 앞 317개를 텍스트로 잘라 context 길이가 333 → **573** 이 됐다. base-08 은 이걸 고치고
+(텍스트 77 + 프레임별 이미지 256) **궤적요약 토큰 32개**까지 빈 텍스트 슬롯에 더했다.
+
+| 누적 2,400스텝 | 액션 주입 | 레이아웃 | 학습 범위 | `motion_weight` | 점수 |
+|---|---|---|---|---|---|
+| base-04 | 덧셈만 | — | 인코더 동결 | 4.0 | 0.3979 |
+| base-06 | + cross-attn | **573 (버그)** | 전체 | 0 | 0.3394 |
+| **base-08** | + cross-attn + 궤적요약 | **333 (정상)** | 전체 | 0 | **0.3381** |
+
+**−0.0013.** 레이아웃을 고치고 토큰을 더 넣어도 사실상 그대로다. 그러면 ⑩에서 본
+0.3979 → 0.3394(−0.0585)는 **cross-attention 이 제대로 붙어서가 아니다** — 남은 두 변수,
+즉 **인코더 동결 해제**와 **`motion_weight` 4.0→0** 중 하나(또는 둘)가 한 일이다.
+
+cross-attention 경로는 **망가진 채로도 고친 뒤에도 같은 점수**를 낸다. 액션을 실을 자리를
+바꾼 것만으로는 아무 일도 일어나지 않았다는 뜻이고, ⑦의 진단("주입 경로를 바꿔야 한다")은
+**경로를 바꾸는 것만으로는 부족하다**로 좁혀진다. 목적함수가 액션을 쓰라고 요구하지 않으면
+새 경로도 그냥 안 쓰인다.
+
+**다음 실험은 남은 두 변수를 쪼개는 것이다** — `motion_weight` 만 되돌린 판, 인코더만 다시 얼린 판.
 
 ## 판정
 

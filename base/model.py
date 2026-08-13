@@ -27,6 +27,9 @@ from lvdm.modules.networks.openaimodel3d import UNetModel
 
 _PATCHED = False
 
+# 킷이 하드코딩한 텍스트 토큰 수 (openaimodel3d.py:719 의 `77 + t*16` 검사와 같은 값)
+TEXT_CONTEXT_LEN = 77
+
 
 def _sdpa_forward(self, x, context=None, mask=None):
     """CrossAttention.forward 를 SDPA 로. 상대위치/마스크가 있으면 원본으로 되돌린다."""
@@ -80,10 +83,15 @@ class ActionCtxUNet(UNetModel):
     균일하게 퍼진다 — "얼마나"는 말해도 **"어디를"은 표현할 자리가 없다**(dacon_submission ⑦).
     cross-attention 은 공간 위치마다 자기 주의 가중치를 계산하므로 지목이 가능하다.
 
-    **어디에 싣나.** 킷 UNet 은 `context` 길이가 `77 + t*16` 이면 이미지 토큰을
-    **프레임별로** 펼치는 분기를 이미 갖고 있다(`openaimodel3d.py:719`). 그 슬롯에 액션 토큰을
-    더한다 — 킷 코드를 고칠 필요가 없고, 무조건부 분기(`uc`, 길이 93)에는 액션이 안 들어가므로
-    **액션 CFG 가 그대로 성립**한다.
+    **어디에 싣나.** Resampler 가 `num_queries × video_length = 16 × 16 = 256` 개의
+    **이미 프레임별인** 이미지 토큰을 낸다(`resampler.py:118`, 주석 `B (T L) C`). UNet 은
+    `context` 길이가 `77 + t*16` 이면 이를 프레임별로 쪼갠다(`openaimodel3d.py:719`).
+    그 슬롯에 액션 토큰을 **더한다** — 길이가 그대로라 킷 코드를 고칠 필요가 없고,
+    무조건부 분기(`uc`)에는 액션이 안 들어가므로 **액션 CFG 가 그대로 성립**한다.
+
+    ★2026-08-10 에 여기서 틀렸다. 이미지 토큰이 16개인 줄 알고 `ctx[:, -16:]` 만 이미지로,
+    앞 317개를 텍스트로 잘랐다 — context 길이가 333 → 573 으로 망가진 채 base-05·06·07 이
+    학습됐다. 텍스트는 항상 앞 77 개이고 나머지가 전부 이미지다.
 
     **왜 UNet 에 두나.** `save_only_unet: True` 라 `self.model` 아래가 아니면 체크포인트에
     저장되지 않는다. 확산 모델 쪽에 두면 학습해놓고 잃어버린다.
@@ -92,11 +100,12 @@ class ActionCtxUNet(UNetModel):
     """
 
     def __init__(self, *args, action_ctx_tokens: int = 16, action_ctx_dim: int = 1024,
-                 action_ctx_hidden: int = 512, **kwargs):
+                 action_ctx_hidden: int = 512, action_txt_tokens: int = 0, **kwargs):
         super().__init__(*args, **kwargs)
         d_in = kwargs.get("action_dims", 6)
         self.action_ctx_tokens = action_ctx_tokens
         self.action_ctx_dim = action_ctx_dim
+        self.action_txt_tokens = action_txt_tokens
         self.action_ctx = nn.Sequential(
             nn.Linear(d_in, action_ctx_hidden),
             nn.SiLU(),
@@ -105,13 +114,33 @@ class ActionCtxUNet(UNetModel):
         nn.init.zeros_(self.action_ctx[-1].weight)
         nn.init.zeros_(self.action_ctx[-1].bias)
         n = sum(p.numel() for p in self.action_ctx.parameters())
-        print(f">>> [base] 액션 cross-attention 토큰 {action_ctx_tokens}개 "
-              f"({n/1e6:.1f}M, zero-init)", flush=True)
+        msg = f">>> [base] 프레임별 액션 토큰 {action_ctx_tokens}개/프레임 ({n/1e6:.1f}M, zero-init)"
+
+        if action_txt_tokens:
+            # 궤적 전체를 통째로 눌러 토큰 몇 개로. 프레임 공용인 텍스트 슬롯에 들어간다 —
+            # "이 클립이 어떤 동작인가"는 프레임마다 달라질 필요가 없다.
+            # LazyLinear 은 첫 forward 전까지 파라미터가 없어 configure_optimizers 에서 터진다.
+            t_len = kwargs.get("temporal_length", 16)
+            self.action_txt = nn.Sequential(
+                nn.Flatten(1),
+                nn.Linear(t_len * d_in, action_ctx_hidden),
+                nn.SiLU(),
+                nn.Linear(action_ctx_hidden, action_txt_tokens * action_ctx_dim),
+            )
+            nn.init.zeros_(self.action_txt[-1].weight)
+            nn.init.zeros_(self.action_txt[-1].bias)
+            msg += f" · 궤적요약 토큰 {action_txt_tokens}개(텍스트 슬롯, zero-init)"
+        print(msg, flush=True)
 
     def action_tokens(self, act):
-        """act: [b, t, d] → [b, t, K, C]"""
+        """act: [b, t, d] → [b, t, K, C] — 프레임별"""
         b, t, _ = act.shape
         return self.action_ctx(act).view(b, t, self.action_ctx_tokens, self.action_ctx_dim)
+
+    def action_summary_tokens(self, act):
+        """act: [b, t, d] → [b, M, C] — 클립 전체를 요약한 프레임 공용 토큰"""
+        b = act.shape[0]
+        return self.action_txt(act).view(b, self.action_txt_tokens, self.action_ctx_dim)
 
 
 # freeze_scope → 동결할 UNet 하위 모듈 이름
@@ -198,18 +227,34 @@ class BaseLatentVisualDiffusion(LatentVisualDiffusion):
             return out
 
         z, cond = out[0], out[1]
-        ctx = cond["c_crossattn"][0]                       # [b, 77+K, C]
-        K = unet.action_ctx_tokens
-        text, img = ctx[:, :-K], ctx[:, -K:]               # 이미지 토큰이 뒤쪽 K 개다
-        b, _, C = img.shape
+        ctx = cond["c_crossattn"][0]                       # [b, 77 + t*L, C]
+        b, _, C = ctx.shape
         t = z.shape[2]
+        text, img = ctx[:, :TEXT_CONTEXT_LEN], ctx[:, TEXT_CONTEXT_LEN:]
+        L = img.shape[1] // t                              # 프레임당 이미지 토큰 수 (Resampler 16)
+        if L * t != img.shape[1]:
+            raise RuntimeError(f"이미지 토큰 {img.shape[1]}개가 프레임 {t}개로 안 나뉜다")
+        if L != unet.action_ctx_tokens:
+            raise RuntimeError(f"action_ctx_tokens={unet.action_ctx_tokens} 인데 "
+                               f"프레임당 이미지 토큰은 {L}개다 — 같아야 더할 수 있다")
 
-        tok = unet.action_tokens(cond["act"])              # [b, t, K, C]
+        tok = unet.action_tokens(cond["act"])              # [b, t, L, C]
+        keep = None
         if self.training and unet.action_dropout_prob > 0:
             keep = (torch.rand(b, device=tok.device) >= unet.action_dropout_prob)
             tok = tok * keep.view(b, 1, 1, 1)              # 떨어뜨린 표본은 액션 없음과 같아진다
-        ctx_img = (img.unsqueeze(1) + tok).reshape(b, t * K, C)
-        cond["c_crossattn"] = [torch.cat([text, ctx_img], dim=1)]
+        img = img.view(b, t, L, C) + tok
+
+        if unet.action_txt_tokens:
+            # 궤적 요약은 텍스트 슬롯 **뒤쪽**에 더한다. 빈 캡션이라 어차피 의미가 없는 자리이고,
+            # train·eval 모두 빈 문자열이라 분포가 어긋나지 않는다.
+            M = unet.action_txt_tokens
+            summ = unet.action_summary_tokens(cond["act"])  # [b, M, C]
+            if keep is not None:
+                summ = summ * keep.view(b, 1, 1)            # 두 경로를 같이 떨어뜨려야 uncond 가 깨끗하다
+            text = torch.cat([text[:, :-M], text[:, -M:] + summ], dim=1)
+
+        cond["c_crossattn"] = [torch.cat([text, img.reshape(b, t * L, C)], dim=1)]
         return out
 
     def setup(self, stage=None):
