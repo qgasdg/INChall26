@@ -67,6 +67,39 @@ def to_12dim(act: torch.Tensor, action_std: torch.Tensor, delta_std: torch.Tenso
     return torch.cat([act, d_norm], dim=-1)
 
 
+TEXT_CONTEXT_LEN = 77
+
+
+def build_action_only_uc(model, z, c):
+    """액션만 뺀 무조건부 조건을 만든다 — **순수 액션 CFG**.
+
+    킷의 `prepare_batch_for_inference` 는 uc 의 이미지 토큰을 **검은 이미지**의 CLIP 임베딩으로
+    만든다(`ddpm3d.py`: `img = torch.zeros_like(x[:,:,0])`). 그래서 CFG 를 걸면 액션뿐 아니라
+    **"실제 이미지 vs 검은 이미지"** 차이까지 같이 증폭된다 — 우리가 육안으로 본 "CFG 가 Video 를
+    깎는다"의 원인이다.
+
+    여기서는 c 에서 **액션 성분만 빼서** uc 를 만든다. 이미지 토큰·`c_concat`·텍스트는 c 와 동일하고
+    `act` 키가 없으므로 UNet 은 덧셈 경로에서 `null_action_emb` 를 쓴다. 두 분기의 차이가
+    액션 하나뿐이 된다.
+    """
+    unet = model.model.diffusion_model
+    ctx = c["c_crossattn"][0]                     # [b, 77 + t*L, C]
+    b, _, C = ctx.shape
+    t = z.shape[2]
+    text, img = ctx[:, :TEXT_CONTEXT_LEN], ctx[:, TEXT_CONTEXT_LEN:]
+    L = img.shape[1] // t
+    act = c["act"]
+    img_only = img.view(b, t, L, C) - unet.action_tokens(act)
+    if getattr(unet, "action_txt_tokens", 0):
+        M = unet.action_txt_tokens
+        summ = unet.action_summary_tokens(act)
+        text = torch.cat([text[:, :-M], text[:, -M:] - summ], dim=1)
+    uc = {"c_crossattn": [torch.cat([text, img_only.reshape(b, t * L, C)], dim=1)]}
+    if "c_concat" in c:
+        uc["c_concat"] = c["c_concat"]            # 첫 프레임 잠재는 두 분기가 공유(원래도 공유)
+    return uc
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--config", default=os.path.expanduser("~/base/base-01.yaml"))
@@ -86,6 +119,9 @@ def main() -> None:
     p.add_argument("--no-ema", action="store_true",
                    help="EMA 비활성화 — 0스텝에서는 EMA 가 사전학습 이전의 랜덤 가중치를 들고 있다")
     p.add_argument("--delta-stats", default=os.path.expanduser("~/ft/data/train/so100_delta_statistics.json"))
+    p.add_argument("--action-only-cfg", action="store_true",
+                   help="uc 를 '같은 이미지 + 액션만 제거'로 다시 만든다. 킷 기본 uc 는 "
+                        "검은 이미지의 CLIP 토큰이라 CFG 가 이미지 조건까지 증폭한다")
     args = p.parse_args()
 
     torch.manual_seed(args.seed)
@@ -142,6 +178,8 @@ def main() -> None:
         if args.action_dims == 12:
             batch["act"] = to_12dim(batch["act"], action_std, delta_std)
         z, c, uc, cond_mask, _logs, kwargs = model.prepare_batch_for_inference(batch)
+        if args.action_only_cfg:
+            uc = build_action_only_uc(model, z, c)
         sk = dict(ddim_kwargs)
         sk.update(kwargs)
         steps = sk.pop("ddim_steps")
