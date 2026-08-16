@@ -3,6 +3,7 @@
 #
 # 사용: infer.sh [체크포인트] [출력폴더]
 #   체크포인트 생략 시 학습 4단계의 step=4800(=누적 9,000)을 쓴다.
+#   LIMIT=2 로 두면 2문제만 돌려 배선을 빨리 확인할 수 있다(기본 216).
 #
 # 소요(RTX PRO 6000 96GB 1장 기준, 제한 1시간):
 #   생성 216개  약 49분   (DDIM 50스텝 · 액션 CFG 2.0 이라 순전파가 2배)
@@ -22,7 +23,7 @@ echo "[$(date +%H:%M:%S)] === 생성 시작 · $CKPT ==="
   --challenge-root "$DATA/eval" \
   --action-stats-path "$DATA/train/so100_action_statistics.json" \
   --delta-stats "$DATA/train/so100_delta_statistics.json" \
-  --action-dims 12 --no-ema --start 0 --limit 216 \
+  --action-dims 12 --no-ema --start 0 --limit "${LIMIT:-216}" \
   --ckpt "$CKPT" --out "$OUT-eval216"
 
 echo "[$(date +%H:%M:%S)] === 배경 고정 ==="
