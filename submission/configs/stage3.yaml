@@ -1,0 +1,201 @@
+name: stage3
+group: base
+logdir: ${oc.env:FT_ROOT}/outputs
+
+data:
+  target: data12.SO100Act12DataModule
+  params:
+    root: ${oc.env:FT_ROOT}/data/train
+    remote: False
+    dataset_paths: auto
+    action_stats_path: ${oc.env:FT_ROOT}/data/train/so100_action_statistics.json
+    delta_stats_path: ${oc.env:FT_ROOT}/data/train/so100_delta_statistics.json
+    normalize_actions: True
+    batch_size: 1
+    num_workers: 2
+    pin_memory: True
+    target_height: 320
+    target_width: 512
+    pad: True
+    camera_key: auto
+    traj_len: 16
+    val_fraction: 0.05
+    downsample: 1
+    use_language: False
+
+model:
+  pretrained_checkpoint: ${oc.env:FT_ROOT}/checkpoints/backbone.ckpt
+  only_reload_modules:            # ★ "model"(UNet) 추가 — 없으면 1.44B 백본이 안 실린다
+    ["model", "first_stage_model", "cond_stage_model", "embedder", "image_proj_model"]
+  base_learning_rate: 1e-5      # ★ 1e-4 는 11M 맨땅 학습용
+  scale_lr: False
+  target: model.BaseLatentVisualDiffusion   # ★ 킷 클래스 서브클래스 — SDPA 어텐션 + 동결 범위 (base/model.py)
+  params:
+    save_only_unet: True
+    linear_warmup_steps: 50       # ★ 250 이면 300스텝 실행의 대부분이 학습률 램프 구간이 된다
+    rescale_betas_zero_snr: True
+    parameterization: "v"
+    linear_start: 0.00085
+    linear_end: 0.012
+    num_timesteps_cond: 1
+    log_every_t: 200
+    timesteps: 1000
+    first_stage_key: video
+    cond_stage_key: caption
+    # ★ 인코더도 푼다. output_blocks 가 소비하는 특징을 input_blocks 가 스킵으로 공급하는데,
+    #   소비자만 바꾸면 공급되는 특징이 고정이라 표현이 제약된다. 얼렸던 건 설계가 아니라 메모리 때문이었다.
+    freeze_scope: none
+    # ★ 8비트 Adam — 옵티마이저 상태 10.7GB → 2.7GB. 이게 있어야 32GB 에 전체 학습이 들어간다.
+    optimizer: adamw8bit
+    # ★ base-01 600스텝에서 로봇 팔이 '지워졌다'. 팔은 화면의 2~5%뿐이라 지우는 게 손실상 이득이기 때문.
+    #    GT 에서 시간에 따라 변하는 자리에 가중치를 줘 지우는 선택을 비싸게 만든다.
+    # ★ 0 으로 둔다 — base-01 300 에서 바뀌는 것이 cross-attention 하나뿐이어야 효과가 갈린다.
+    #   움직임 가중 손실은 태양님 v2_500(0.3762)과 base-04(0.3979) 둘 다 불리했다.
+    motion_weight: 0.0
+    # ★ base-08 2100(누적 2,400)에서 이어서 간다. Adam 은 새로 시작한다(체크포인트에 상태 없음).
+    resume_unet: ${oc.env:RESUME_CKPT}
+    cond_stage_trainable: False
+    image_proj_model_trainable: False
+    conditioning_key: hybrid
+    image_size: [40, 64]
+    channels: 4
+    scale_by_std: False
+    scale_factor: 0.18215
+    use_ema: False                # ★ LitEma 는 1440M 그림자 사본 = 5.4GB. 켜두면 32GB 에 학습이 안 들어간다
+    uncond_prob: 0.05
+    uncond_type: "empty_seq"
+    rand_cond_frame: false
+    use_dynamic_rescale: true
+    base_scale: 0.7
+    fps_condition_type: "fps"
+    perframe_ae: True
+
+    unet_config:
+      target: model.ActionCtxUNet   # ★ 액션 cross-attention 토큰 생성기를 붙인 UNet
+      params:
+        action_conditioned: True
+        action_ctx_tokens: 16       # 프레임당 액션 토큰 — 이미지 토큰 16개 자리에 더한다(프레임별 정보)
+        action_txt_tokens: 32       # ★ 궤적 요약 토큰 — 빈 텍스트 슬롯 77칸 중 뒤 32칸에 더한다(프레임 공용)
+        action_ctx_dim: 1024        # ★ context_dim 과 같아야 한다
+        add_act_time_emb: True      # ★ False 면 time_embed 가 1280→640 이 되어 사전학습과 충돌
+        action_dims: 12             # ★ 절대 6 + Δ 6
+        action_dropout_prob: 0.1    # ★ 0 이면 null_action_emb 가 그래디언트를 못 받아
+                                    #   추론의 액션 CFG 기준점이 학습 안 된 값으로 남는다
+        use_scale_shift_norm: False # ★ backbone 은 False. True 면 emb_layers 가 2배 어긋난다
+        in_channels: 8
+        out_channels: 4
+        model_channels: 320         # ★ backbone 실측
+        attention_resolutions:      # ★
+          - 4
+          - 2
+          - 1
+        num_res_blocks: 2
+        channel_mult:               # ★
+          - 1
+          - 2
+          - 4
+          - 4
+        dropout: 0.1
+        num_head_channels: 64       # ★
+        transformer_depth: 1
+        context_dim: 1024
+        use_linear: true
+        use_checkpoint: True
+        temporal_conv: True
+        temporal_attention: True
+        temporal_selfatt_only: true
+        use_relative_position: false
+        use_causal_attention: False
+        temporal_length: 16
+        addition_attention: true
+        image_cross_attention: true
+        default_fs: 10
+        fs_condition: true          # ★ 사전학습 fps_embedding 보존
+
+    first_stage_config:
+      target: lvdm.models.autoencoder.AutoencoderKL
+      params:
+        embed_dim: 4
+        monitor: val/rec_loss
+        ddconfig:
+          double_z: True
+          z_channels: 4
+          resolution: 256
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+            - 1
+            - 2
+            - 4
+            - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+
+    cond_stage_config:
+      target: lvdm.modules.encoders.condition.FrozenOpenCLIPEmbedder
+      params:
+        freeze: true
+        layer: "penultimate"
+
+    img_cond_stage_config:
+      target: lvdm.modules.encoders.condition.FrozenOpenCLIPImageEmbedderV2
+      params:
+        freeze: true
+
+    image_proj_stage_config:
+      target: lvdm.modules.encoders.resampler.Resampler
+      params:
+        dim: 1024
+        depth: 4
+        dim_head: 64
+        heads: 12
+        num_queries: 16
+        embedding_dim: 1280
+        output_dim: 1024
+        ff_mult: 4
+        video_length: 16
+
+lightning:
+  precision: bf16
+  trainer:
+    strategy: ddp
+    accelerator: "gpu"
+    limit_train_batches: 1.0
+    limit_val_batches: 2
+    check_val_every_n_epoch: 2
+    num_sanity_val_steps: 0
+    num_nodes: 1
+    benchmark: True
+    accumulate_grad_batches: 16   # 유효 배치 16
+    max_steps: 1800
+    max_time: "00:48:00:00"
+    log_every_n_steps: 10
+    gradient_clip_algorithm: "norm"
+    gradient_clip_val: 1.0
+    logger:
+      target: pytorch_lightning.loggers.CSVLogger
+      params:
+        save_dir: ../outputs/logs/
+        name: inha_action_diffusion
+  callbacks:
+    model_checkpoint:
+      target: pytorch_lightning.callbacks.ModelCheckpoint
+      params:
+        filename: "{epoch}-{step}"
+        save_weights_only: True
+        every_n_train_steps: 600   # 하나가 5.9GB 라 300 간격이면 시간당 17GB 를 먹는다
+        # save_top_k 는 monitor 없이는 -1/0/1 만 허용된다(PL 1.9.3 model_checkpoint.py:423).
+        # monitor 를 val/loss 로 두면 안 된다 — 손실이 낮을수록 점수가 나빴다(ft-07). 전부 남기고 제출로 고른다.
+        save_top_k: -1
+        save_last: False           # -1 이면 마지막이 중복 저장된다(5.4GB 낭비)
+
+ddim_kwargs:
+  ddim_steps: 50
+  unconditional_guidance_scale: 1.0
+  timestep_spacing: uniform_trailing
+  ddim_eta: 0.0
+  verbose: False

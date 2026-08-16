@@ -1,0 +1,23 @@
+# 실제로 학습·추론을 돌린 환경 그대로 (python 3.11.13)
+# torch 는 CUDA 빌드가 GPU 세대에 묶인다 — RTX 5090/PRO 6000(Blackwell, sm_120)에는 cu129 가 필요하고
+# 기본 PyPI 휠(cu126)로는 커널이 없어서 죽는다. 아래 인덱스에서 받아야 한다:
+#   pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu129
+torch==2.8.0
+torchvision==0.23.0
+
+pytorch-lightning==1.9.3   # 킷이 요구하는 버전. 2.x 는 API 가 달라 킷이 안 돈다
+omegaconf==2.1.1           # 설정의 ${oc.env:...} 치환에 2.1 이상 필요
+einops==0.6.0
+bitsandbytes==0.50.0       # 8비트 AdamW — 옵티마이저 상태 10.7GB → 2.7GB
+transformers==4.48.3
+open_clip_torch==2.22.0
+imageio==2.37.4
+av==18.0.0                 # imageio 의 pyav 플러그인 (mp4 읽기/쓰기)
+pandas==2.2.3
+pyarrow==25.0.0            # parquet 액션 로그
+numpy==1.26.4
+pillow==11.3.0
+opencv-python==4.11.0.86
+safetensors==0.8.0
+kornia==0.8.3
+scipy==1.17.1
