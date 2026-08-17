@@ -36,6 +36,15 @@ export USE_TF=0 TRANSFORMERS_NO_TF=1 USE_FLAX=0
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 PY="${PY:-python}"
 
+# Δ 통계는 **대회 제공 파일이 아니라 우리가 학습 데이터에서 만드는 것**이다.
+# 액션 12차원의 뒤 6칸(프레임 간 변화량)을 정규화하는 데 쓰는데, 절대값 통계로 나누면
+# Δ 가 전역 std 의 8% 수준이라 0 근처로 눌린다. 없으면 여기서 만든다(1분 남짓).
+DELTA="$FT_ROOT/data/train/so100_delta_statistics.json"
+if [ ! -s "$DELTA" ]; then
+  echo ">>> Δ 통계가 없어 새로 만듭니다: $DELTA"
+  "$PY" "$HERE/src/make_delta_stats.py" "$FT_ROOT/data/train"
+fi
+
 ckpt_at () {   # ckpt_at <단계> <스텝> → 그 스텝의 체크포인트 경로 (epoch 번호는 데이터 크기에 따라 달라진다)
   local f
   f=$(ls "$FT_ROOT/outputs/$1/checkpoints/"*step="$2".ckpt 2>/dev/null | head -1)
