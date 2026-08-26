@@ -171,7 +171,7 @@ lightning:
     num_nodes: 1
     benchmark: True
     accumulate_grad_batches: 16   # 유효 배치 16
-    max_steps: 4800
+    max_steps: 6600
     max_time: "00:48:00:00"
     log_every_n_steps: 10
     gradient_clip_algorithm: "norm"

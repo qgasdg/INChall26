@@ -2,7 +2,7 @@
 # 추론 — eval 216문제 영상 생성 → 배경 고정 → 제출 CSV.
 #
 # 사용: infer.sh [체크포인트] [출력폴더]
-#   체크포인트 생략 시 학습 4단계의 step=4800(=누적 9,000)을 쓴다.
+#   체크포인트 생략 시 학습 4단계의 step=6600(=누적 10,800)을 쓴다 — 제출 점수를 낸 모델이다.
 #   LIMIT=2 로 두면 2문제만 돌려 배선을 빨리 확인할 수 있다(기본 216).
 #
 # 소요(RTX PRO 6000 96GB 1장 기준, 제한 1시간):
@@ -13,7 +13,7 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/env.sh"
 
-CKPT="${1:-$(ckpt_at stage4 4800)}"
+CKPT="${1:-$(ckpt_at stage4 6600)}"
 OUT="${2:-$FT_ROOT/out/final}"
 DATA="$FT_ROOT/data"
 
