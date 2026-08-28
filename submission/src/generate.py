@@ -147,6 +147,12 @@ def main() -> None:
     if args.ddim_steps is not None:
         ddim_kwargs["ddim_steps"] = args.ddim_steps
 
+    # 실제로 쓴 샘플링 설정을 로그에 남긴다. 이 값들이 점수를 좌우하는데
+    # 로그만으로는 확인할 수 없어서, 나중에 CSV 하나를 놓고 "어떤 설정으로
+    # 만든 것인가"를 되짚을 방법이 없었다.
+    print(">>> 샘플링 설정: " + " · ".join(f"{k}={v}" for k, v in sorted(ddim_kwargs.items())))
+    print(f">>> EMA 사용={not args.no_ema} · 액션 차원={args.action_dims} · 시드={args.seed}")
+
     action_mean, action_std = load_action_stats(args.action_stats_path)
     if action_mean is not None:
         action_mean, action_std = action_mean.to(device), action_std.to(device)
