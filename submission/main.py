@@ -21,6 +21,7 @@ import glob
 import os
 import subprocess
 import sys
+import urllib.request
 import time
 from pathlib import Path
 
@@ -31,12 +32,39 @@ def log(msg: str) -> None:
     print(f"[{time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
+# 킷의 baseline.ipynb 7번 셀이 쓰는 것과 같은 주소다. 대회가 별도로 배포하는 파일이 아니라
+# 공개된 DynamiCrafter 512 가중치이며, 없으면 여기서 받는다.
+BACKBONE_URL = "https://huggingface.co/Doubiiu/DynamiCrafter_512/resolve/main/model.ckpt"
+
+
+def ensure_backbone(ft: Path) -> None:
+    """백본이 없으면 내려받는다(약 9.7GB).
+
+    이것이 없으면 학습이 시작되지 않는데, 킷에서는 baseline.ipynb 를 실행해야만
+    받아진다. 우리 파이프라인은 그 노트북을 거치지 않으므로 여기서 챙긴다.
+    """
+    dst = ft / "checkpoints" / "backbone.ckpt"
+    if dst.exists() and dst.stat().st_size > 5 * 2**30:
+        return
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    log(f"백본이 없어 내려받습니다 (약 9.7GB): {BACKBONE_URL}")
+    tmp = dst.with_suffix(".part")
+    urllib.request.urlretrieve(BACKBONE_URL, tmp)
+    n = tmp.stat().st_size
+    if n < 5 * 2**30:
+        tmp.unlink(missing_ok=True)
+        sys.exit(f"★백본 내려받기가 중간에 끊겼습니다({n/2**30:.2f}GB) — 다시 실행하세요")
+    tmp.rename(dst)
+    log(f"백본 준비 완료: {dst} ({n/2**30:.2f}GB)")
+
+
 def roots() -> tuple[Path, Path]:
     ft = os.environ.get("FT_ROOT")
     if not ft:
         sys.exit("★FT_ROOT 를 export 하세요 (예: export FT_ROOT=$HOME/ft) — 배치도는 README 4절")
     ft = Path(ft).expanduser().resolve()
     kit_root = Path(os.environ.get("KIT_ROOT", ft / "kit")).expanduser().resolve()
+    ensure_backbone(ft)
     need = [
         ft / "checkpoints" / "backbone.ckpt",
         ft / "data" / "train",

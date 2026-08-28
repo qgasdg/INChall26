@@ -42,7 +42,7 @@ python main.py infer --limit 2               # 두 문제만 — 배선 확인 (
 | 외부 데이터 | 불가 | 대회 제공 학습셋만 사용 | |
 | 평가셋 학습 | 금지 | `data/eval` 은 추론에서만 읽음 | |
 | 채점 킷 수정 | 실격 | **한 줄도 고치지 않았습니다.** 킷 함수를 밖에서 부르기만 합니다 | |
-| 사전학습 가중치 | 공개 + 허용 라이선스 | 대회가 제공한 `backbone.ckpt` 외 **없음** | |
+| 사전학습 가중치 | 공개 + 허용 라이선스 | 공개 모델 `Doubiiu/DynamiCrafter_512` 의 `model.ckpt` **하나뿐**입니다. 킷의 `baseline.ipynb` 가 쓰는 것과 같은 파일이며, 없으면 자동으로 받습니다 | |
 | 코드 파일 확장자 | `.py` / `.ipynb` | 진입점은 **`main.py`** 입니다. `scripts/*.sh` 는 같은 명령을 부르는 편의용 사본입니다 |
 | 시드 · 하이퍼파라미터 | 명시 | 7절에 전부 (학습 시드 20230211 · 추론 시드 0) |
 | 개발 환경 · 라이브러리 버전 | 기재 | 7절 + `requirements.txt` (전부 버전 고정) |
@@ -158,7 +158,9 @@ UNet 가중치만 물려받고 **옵티마이저 상태는 새로 시작하며 �
 
 ```
 $FT_ROOT/
-  checkpoints/backbone.ckpt          대회 제공 사전학습 가중치
+  checkpoints/backbone.ckpt          사전학습 가중치 — **없으면 자동으로 받습니다**
+                                     (공개 모델 Doubiiu/DynamiCrafter_512 의 model.ckpt,
+                                      킷의 baseline.ipynb 7번 셀과 같은 주소. 약 9.7GB)
   data/train/                        학습 데이터 + so100_action_statistics.json (대회 제공)
                                      so100_delta_statistics.json 은 **우리가 만듭니다** —
                                      없으면 env.sh 가 src/make_delta_stats.py 로 자동 생성(1분)
