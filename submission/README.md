@@ -16,10 +16,18 @@
 ## 1. 돌리는 법
 
 ```bash
-export FT_ROOT=$HOME/ft          # 아래 4절 배치도대로 데이터·백본을 놓은 곳
+export FT_ROOT=$HOME/ft          # 빈 폴더여도 됩니다 — 필요한 것을 알아서 받습니다
 export KIT_ROOT=$FT_ROOT/kit     # 생략하면 $FT_ROOT/kit
-python main.py all               # 학습 31시간 + 추론 52분
+python main.py all               # 준비 + 학습 35시간 45분 + 추론 60분
 ```
+
+**`FT_ROOT` 는 빈 폴더로 시작해도 됩니다.** 없으면 아래를 알아서 받아 배치합니다.
+- **백본** 9.7GB — 공개 모델 `Doubiiu/DynamiCrafter_512` 의 `model.ckpt`
+- **대회 데이터와 킷** 8.6GB — 데이콘 배포 `open.zip`
+- **Δ 통계** — 학습 데이터에서 1분 남짓 걸려 생성
+
+준비만 먼저 해두려면 `python main.py prepare` 입니다. 디스크는 약 30GB 필요합니다
+(백본 9.7 + 꾸러미 8.6 + 체크포인트).
 
 학습과 추론을 따로 돌리려면:
 
@@ -157,18 +165,19 @@ UNet 가중치만 물려받고 **옵티마이저 상태는 새로 시작하며 �
 ## 4. 파일 배치
 
 ```
+아래는 실행이 끝난 뒤의 모습입니다. **★ 표시는 코드가 알아서 만들거나 받는 것**이라
+직접 놓으실 필요가 없습니다.
+
 $FT_ROOT/
-  checkpoints/backbone.ckpt          사전학습 가중치 — **없으면 자동으로 받습니다**
-                                     (공개 모델 Doubiiu/DynamiCrafter_512 의 model.ckpt,
-                                      킷의 baseline.ipynb 7번 셀과 같은 주소. 약 9.7GB)
-  data/train/                        학습 데이터 + so100_action_statistics.json (대회 제공)
-                                     so100_delta_statistics.json 은 **우리가 만듭니다** —
-                                     없으면 env.sh 가 src/make_delta_stats.py 로 자동 생성(1분)
-  data/eval/                         평가 216문제
-  outputs/                           학습 산출 (스크립트가 만듭니다)
-  out/                               생성 영상 (스크립트가 만듭니다)
+  open.zip → openpkg/                ★ 데이콘 배포 꾸러미를 받아 푼 것 (푼 뒤 zip 은 지웁니다)
+  checkpoints/backbone.ckpt          ★ 공개 모델 Doubiiu/DynamiCrafter_512 의 model.ckpt (9.7GB)
+  data/train/                        ★ openpkg 로 연결 · 학습 데이터 + so100_action_statistics.json
+                                       so100_delta_statistics.json 은 ★ 학습 데이터에서 생성(1분)
+  data/eval/                         ★ openpkg 로 연결 · 평가 216문제
+  outputs/                           ★ 학습 산출
+  out/                               ★ 생성 영상
 $KIT_ROOT/
-  baseline/challenge_kit/            대회 킷 — 원본 그대로
+  baseline/challenge_kit/            ★ openpkg 로 연결 · 대회 킷 원본 그대로
   baseline/shared_libs/video_utils/
   submission_kit/make_submission_csv.py
 ```

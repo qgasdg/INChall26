@@ -24,17 +24,8 @@ KIT="$KIT_ROOT/baseline/challenge_kit"
 SUBKIT="$KIT_ROOT/submission_kit"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# 백본이 없으면 받는다 — 킷의 baseline.ipynb 7번 셀과 같은 주소다. 대회가 따로 배포하는
-# 파일이 아니라 공개된 DynamiCrafter 512 가중치이고, 그 노트북을 거치지 않으면 안 받아진다.
-BB="$FT_ROOT/checkpoints/backbone.ckpt"
-if [ ! -s "$BB" ] || [ "$(stat -c%s "$BB" 2>/dev/null || stat -f%z "$BB")" -lt 5000000000 ]; then
-  echo ">>> 백본이 없어 내려받습니다 (약 9.7GB)"
-  mkdir -p "$(dirname "$BB")"
-  curl -L --fail -o "$BB.part" \
-    "https://huggingface.co/Doubiiu/DynamiCrafter_512/resolve/main/model.ckpt" \
-    && mv "$BB.part" "$BB" \
-    || { echo "★백본 내려받기 실패"; rm -f "$BB.part"; exit 1; }
-fi
+# 백본·데이터·킷이 없으면 받아서 배치한다. 로직은 main.py 한 곳에만 둔다.
+"${PY:-python}" "$HERE/main.py" prepare || exit 1
 
 for p in "$FT_ROOT/checkpoints/backbone.ckpt" "$FT_ROOT/data/train" "$FT_ROOT/data/eval" \
          "$KIT/scripts/train_diffusion.py" "$SUBKIT/make_submission_csv.py"; do

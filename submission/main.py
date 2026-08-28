@@ -19,9 +19,11 @@ from __future__ import annotations
 import argparse
 import glob
 import os
+import shutil
 import subprocess
 import sys
 import urllib.request
+import zipfile
 import time
 from pathlib import Path
 
@@ -36,6 +38,36 @@ def log(msg: str) -> None:
 # 공개된 DynamiCrafter 512 가중치이며, 없으면 여기서 받는다.
 BACKBONE_URL = "https://huggingface.co/Doubiiu/DynamiCrafter_512/resolve/main/model.ckpt"
 
+# 대회 배포 꾸러미(킷 + 학습/평가 데이터). 인증 없이 받을 수 있다.
+OPEN_URL = "https://cfiles.dacon.co.kr/competitions/236736/open.zip"
+OPEN_SIZE = 9209529683
+
+
+def fetch(url: str, dst: Path, expect: int | None = None, what: str = "") -> None:
+    """큰 파일을 받는다. curl 이 있으면 그쪽을 쓴다 — 이어받기가 되고,
+    파이썬의 SSL 인증서 설정에 의존하지 않는다(맥 기본 파이썬에서 자주 막힌다).
+
+    받는 동안에는 .part 로 두고, 크기를 확인한 뒤에만 제자리로 옮긴다.
+    반쪽짜리 파일로 학습이 시작되면 36시간을 헛돈다.
+    """
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dst.with_name(dst.name + ".part")
+    log(f"{what} 내려받습니다: {url}")
+    if shutil.which("curl"):
+        r = subprocess.run(["curl", "-L", "--fail", "--retry", "3", "-C", "-", "-o", str(tmp), url])
+        if r.returncode != 0:
+            sys.exit(f"★내려받기 실패(curl {r.returncode}): {url}")
+    else:
+        urllib.request.urlretrieve(url, tmp)
+    n = tmp.stat().st_size
+    if expect is not None and n != expect:
+        sys.exit(f"★크기가 다릅니다({n} != {expect}) — {tmp} 를 지우고 다시 실행하세요")
+    if expect is None and n < 5 * 2**30:
+        tmp.unlink(missing_ok=True)
+        sys.exit(f"★내려받기가 중간에 끊겼습니다({n/2**30:.2f}GB) — 다시 실행하세요")
+    tmp.rename(dst)
+    log(f"{what} 준비 완료: {dst} ({n/2**30:.2f}GB)")
+
 
 def ensure_backbone(ft: Path) -> None:
     """백본이 없으면 내려받는다(약 9.7GB).
@@ -46,16 +78,46 @@ def ensure_backbone(ft: Path) -> None:
     dst = ft / "checkpoints" / "backbone.ckpt"
     if dst.exists() and dst.stat().st_size > 5 * 2**30:
         return
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    log(f"백본이 없어 내려받습니다 (약 9.7GB): {BACKBONE_URL}")
-    tmp = dst.with_suffix(".part")
-    urllib.request.urlretrieve(BACKBONE_URL, tmp)
-    n = tmp.stat().st_size
-    if n < 5 * 2**30:
-        tmp.unlink(missing_ok=True)
-        sys.exit(f"★백본 내려받기가 중간에 끊겼습니다({n/2**30:.2f}GB) — 다시 실행하세요")
-    tmp.rename(dst)
-    log(f"백본 준비 완료: {dst} ({n/2**30:.2f}GB)")
+    fetch(BACKBONE_URL, dst, what="백본(약 9.7GB)을")
+
+
+def ensure_dataset(ft: Path, kit_root: Path) -> None:
+    """대회 데이터와 킷이 없으면 open.zip 을 받아 배치한다(약 8.6GB).
+
+    경로를 하드코딩하는 이유: 처음에 `find -name train` 으로 찾게 했더니 킷의
+    설정 폴더(challenge_kit/configs/train)를 먼저 잡아서, 학습 데이터가 0건인 채로
+    학습이 시작된 적이 있다. 꾸러미 안의 구조는 고정이므로 그대로 적는다.
+    """
+    need = [
+        ft / "data" / "train", ft / "data" / "eval",
+        kit_root / "baseline" / "challenge_kit" / "scripts" / "train_diffusion.py",
+        kit_root / "submission_kit" / "make_submission_csv.py",
+    ]
+    if all(p.exists() for p in need):
+        return
+
+    pkg = ft / "openpkg"
+    if not (pkg / "data" / "train").exists():
+        zp = ft / "open.zip"
+        if not (zp.exists() and zp.stat().st_size == OPEN_SIZE):
+            fetch(OPEN_URL, zp, expect=OPEN_SIZE, what="대회 데이터·킷(약 8.6GB)을")
+        log("압축을 풉니다")
+        pkg.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(zp) as z:
+            z.extractall(pkg)
+        zp.unlink(missing_ok=True)   # 8.6GB — 풀고 나면 필요 없다
+
+    def link(src: Path, dst: Path) -> None:
+        if dst.exists() or dst.is_symlink():
+            return
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.symlink_to(src)
+
+    link(pkg / "data" / "train", ft / "data" / "train")
+    link(pkg / "data" / "eval", ft / "data" / "eval")
+    link(pkg / "baseline", kit_root / "baseline")
+    link(pkg / "submission_kit", kit_root / "submission_kit")
+    log(f"데이터·킷 배치 완료: {pkg}")
 
 
 def roots() -> tuple[Path, Path]:
@@ -65,6 +127,7 @@ def roots() -> tuple[Path, Path]:
     ft = Path(ft).expanduser().resolve()
     kit_root = Path(os.environ.get("KIT_ROOT", ft / "kit")).expanduser().resolve()
     ensure_backbone(ft)
+    ensure_dataset(ft, kit_root)
     need = [
         ft / "checkpoints" / "backbone.ckpt",
         ft / "data" / "train",
@@ -185,7 +248,9 @@ def do_infer(ft: Path, kit_root: Path, env: dict, ckpt: Path, out: Path, limit: 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="백본 → 학습 → 추론 → 제출 CSV")
-    ap.add_argument("step", choices=["all", "train", "infer"], nargs="?", default="all")
+    ap.add_argument("step", choices=["all", "train", "infer", "prepare"],
+                    nargs="?", default="all",
+                    help="prepare = 백본·데이터·킷·Δ통계만 준비하고 끝낸다")
     ap.add_argument("--ckpt", default=None, help="추론에 쓸 가중치. 생략 시 stage4 step=6600(=누적 10,800)")
     ap.add_argument("--limit", type=int, default=216, help="문제 수. 배선 확인은 2 정도로")
     ap.add_argument("--out", default=None, help="생성 영상 폴더. 기본 $FT_ROOT/out/final")
@@ -194,6 +259,10 @@ def main() -> None:
     ft, kit_root = roots()
     env = environ(ft, kit_root)
     ensure_delta_stats(ft, env)
+
+    if args.step == "prepare":
+        log("준비 완료 — 학습은 `python main.py train`")
+        return
 
     ckpt = None
     if args.step in ("all", "train"):
