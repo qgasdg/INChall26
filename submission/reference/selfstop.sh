@@ -6,7 +6,7 @@
 # HF 쓰기는 방금 복구를 확인했다(어제는 용량 초과로 막혀 있었다).
 ID=1tan99biej6oxm
 L=/runpod/selfstop.log
-TOK=${HF_TOKEN}
+TOK="${HF_TOKEN:?HF_TOKEN 을 export 하세요}"   # 하드코딩하지 말 것
 PY=/runpod/venv/bin/python
 say () { echo "[$(date -u +'%m-%d %H:%M UTC')] $*" >> "$L"; }
 
