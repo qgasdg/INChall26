@@ -22,3 +22,6 @@ local_runs/
 
 # 분석 캐시
 local_eval/*.npz
+
+# 실수로 딸려 들어갔던 외부 저장소 클론 (github.com/dreamzero0/dreamzero)
+results/dreamzero_backup/dreamzero/
