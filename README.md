@@ -15,50 +15,42 @@
 점수는 정답과의 거리라 **낮을수록 좋습니다**
 (`0.3×DINO + 0.3×Video + 0.4×Action`, 자세한 것은 [docs/02_평가산식_분석.md](docs/02_평가산식_분석.md)).
 
-이 판에서 정적 기준선은 만만한 상대가 아니었습니다 — 대회 내내 우리 생성물이 그걸 못 이기는
-구간이 길었고, 왜 그런지는 [docs/dacon_submission.md](docs/dacon_submission.md) 에 적어두었습니다.
+정적 기준선의 점수가 예상보다 좋았고, 모델의 추론 결과물은 예상보다 점수가 안 좋았습니다 — 대회 내내 우리 생성물이 그걸 못 이기는 구간이 길었고, 왜 그런지는 [docs/dacon_submission.md](docs/dacon_submission.md) 에 적어두었습니다.
 
-## 돌려보려면
+## 시작하기
 
-**[`submission/`](submission/) 한 폴더로 전 구간이 돕니다** — GPU 1장에서 백본부터 제출 CSV까지.
+**[`submission/`](submission/)**
 
 ```bash
 cd submission
 export FT_ROOT=$HOME/ft          # 빈 폴더여도 됩니다
-python main.py all               # 준비 + 학습 35시간 45분 + 추론 60분
+python main.py all               # 준비 + 학습 35시간 45분 + 추론 60분 (RTX 5090 기준)
 ```
 
-백본(9.7GB)과 대회 데이터(8.6GB)는 없으면 알아서 받습니다. 디스크 약 30GB.
-배선만 확인하려면 `python main.py infer --limit 2` (3분).
+백본(9.7GB)과 대회 데이터(8.6GB)는 자동으로 다운로드합니다. (전체적으로 용량이 30GB 정도 필요합니다.)
+추론 과정 smoke test는 다음으로 가능합니다 - `python main.py infer --limit 2` (3분).
 자세한 것은 **[submission/README.md](submission/README.md)** 에 있습니다.
 
 ## 저장소 구성
 
 | 경로 | 내용 |
 |---|---|
-| [`submission/`](submission/) | **최종 제출 코드.** 단일 GPU 재현 한 벌 — 학습 4단계 → 생성 → 배경 고정 → CSV |
-| [`base/`](base/) | 대회 baseline 에서 **측정으로 검증된 것만** 고친 설정. 대회 원본 config 로는 백본 1,107개 텐서 중 1개만 실린다는 것 등 |
-| [`docs/`](docs/) | 실험 일지·분석·조사 기록 (한국어). 가설이 깨진 기록도 그대로 남겨두었습니다 |
-| [`results/`](results/) | 실험별 로컬 점수와 데이콘 제출 로그 — 체크포인트 선택의 근거 장부 |
+| [`submission/`](submission/) | **최종 제출 코드.** 단일 GPU 재현 — 학습 4단계 → 생성 → 배경 고정 → CSV |
+| [`base/`](base/) | 대회 baseline 에서 일부 고친 설정. 대회 원본 config로는 백본 1,107개 텐서 중 1개만 실리고 있습니다. |
+| [`docs/`](docs/) | 실험 일지·분석·조사 기록 |
+| [`results/`](results/) | 실험별 로컬 점수와 데이콘 제출 로그 — 체크포인트 선택의 근거 |
 | [`local_eval/`](local_eval/) | 로컬 채점·분석 도구 |
-
-문서 중 처음 읽기 좋은 것:
-[01 대회개요](docs/01_대회개요.md) ·
-[22 쉬운말 전체정리](docs/22_쉬운말_전체정리.md) ·
-[dacon_submission](docs/dacon_submission.md)(제출 이력 전체)
 
 ## 접근 방식 한 줄 요약
 
 대회가 준 11M(1,100만 파라미터) baseline 을 맨땅에서 학습하는 대신, **공개 사전학습 모델
-[DynamiCrafter_512](https://huggingface.co/Doubiiu/DynamiCrafter_512)(1.4B)를 가져와 액션 조건을
-주입해 미세조정**했습니다. 거기에 액션 CFG(classifier-free guidance, 조건을 얼마나 강하게
-따를지 조절하는 장치) 2.0 과 배경 고정 후처리를 얹은 것이 최종 레시피입니다.
+[DynamiCrafter_512](https://huggingface.co/Doubiiu/DynamiCrafter_512)(1.4B)를 가져와 액션 조건을 주입해 미세조정**했습니다. 거기에 액션 CFG(classifier-free guidance, 조건을 얼마나 강하게 따를지 조절하는 장치) 2.0 과 배경 고정 후처리를 얹은 것이 최종 레시피입니다.
 
 ## 주의
 
 - **대회 데이터는 들어 있지 않습니다.** 데이콘 배포 `open.zip` 은 `.gitignore` 로 빠져 있고,
   `submission/main.py` 가 실행 시점에 받아옵니다.
 - **`docs/` 는 정리된 문서가 아니라 작업 일지입니다.** 팀 내부 논의와 중간에 틀린 판단이
-  그대로 남아 있습니다 — 나중에 뒤집힌 결론도 지우지 않고 어디서 왜 틀렸는지 적어두었습니다.
+  그대로 남아 있습니다 — 나중에 뒤집힌 결론도 지우지 않고 어디서 왜 틀렸는지 적어두었습니다. 대부분 클로드가 작성을 했기 때문에 사람이 읽기에는 불편한 부분이 있습니다. 따로 연락을 주시면 더 편하게 알려드릴 수 있습니다.
 - 잃은 것도 있습니다: b10y 계보(누적 15,600~22,800)의 체크포인트와 설정은 pod 삭제와 함께
   사라져 재현되지 않습니다. **최종 제출물을 만든 누적 10,800 경로는 온전합니다.**
